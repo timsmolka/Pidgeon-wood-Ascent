@@ -174,6 +174,38 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .more .btn.add { background: var(--ink); color: var(--bg); }
 .more .btn[disabled] { opacity: .35; cursor: default; }
 .target .of { font-size: .55em; color: var(--muted); }
+/* Meter halves + bank */
+.halves { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 420px; margin-top: 14px; }
+.half { display: grid; gap: 2px; background: var(--bg); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.half .num { font-size: 26px; font-weight: 800; line-height: 1.1; }
+.half small { font-size: 12px; color: var(--muted); }
+.hb { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.hb i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .6s ease; }
+.half.social .hb i { background: var(--gold); }
+.bank { background: var(--surface); border-radius: 20px; padding: 20px; border: 2px solid var(--line); display: grid; gap: 16px; }
+.bank .sec-head { margin-bottom: 0; }
+.bank-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bn { display: grid; gap: 2px; min-width: 0; }
+.bn .num { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.bn.owed .num { font-size: 40px; color: var(--done); }
+.payform { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; background: var(--bg); border-radius: 14px; padding: 14px; }
+.payform label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.payform input { font: inherit; font-size: 18px; color: var(--ink); background: var(--surface); border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 9rem; max-width: 100%; }
+.payform input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.payform .err { width: 100%; color: var(--ink); font-weight: 600; font-size: 14px; margin: 0; }
+.payform .hint { width: 100%; margin: 0; font-size: 14px; color: var(--muted); }
+.paylog { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.paylog li { display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; font-size: 15px; }
+.paylog .pd { color: var(--muted); min-width: 5.5rem; }
+.paylog .pa { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
+.paylog .pn { flex: 1; min-width: 0; color: var(--muted); overflow-wrap: anywhere; }
+.paylog .empty { color: var(--muted); border: 0; padding: 0; }
+@media (max-width: 480px) {
+  .bank { padding: 16px; }
+  .bank-nums { grid-template-columns: 1fr 1fr; }
+  .bn.owed { grid-column: 1 / -1; }
+  .half .num { font-size: 22px; }
+}
 .locked { border: 2px dashed var(--line); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
 .locked .lk { width: 56px; height: 56px; border-radius: 14px; background: var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 900; font-size: 32px; color: var(--muted); }
 .locked h2 { font-size: 26px; font-weight: 800; line-height: 1.05; }
@@ -267,7 +299,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   <section aria-labelledby="board-h" class="board" id="board-card">
     <div class="sec-head">
       <h2 id="board-h">Level 1 · $10</h2>
-      <span class="label" id="board-left">500 pts to go</span>
+      <span class="label" id="board-left">$10.00 to go</span>
     </div>
     <div class="meter">
       <svg viewBox="0 0 240 136" role="img" aria-labelledby="meter-cash meter-pts">
@@ -278,23 +310,42 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       </svg>
       <div class="m-read">
         <span class="m-name">Effort-o-meter</span>
-        <span class="num m-cash" id="meter-cash">$0</span>
-        <span class="m-pts" id="meter-pts">0 / 500 effort points</span>
+        <span class="num m-cash" id="meter-cash">$0.00</span>
+      </div>
+      <div class="halves">
+        <div class="half"><span class="label">Body</span><span class="num" id="h-body">$0.00</span><span class="hb"><i id="hb-body"></i></span><small>up to $5</small></div>
+        <div class="half social"><span class="label">Social</span><span class="num" id="h-social">$0.00</span><span class="hb"><i id="hb-social"></i></span><small>the other $5</small></div>
       </div>
     </div>
-    <p class="board-intro" id="board-intro">Everything counts. Every 50 effort points earns $1, and 500 points clears Level 1 for the full $10. The bars below are the plan, but any mix gets you there.</p>
+    <p class="board-intro" id="board-intro">Everything you do earns money. Workouts and check-ins can earn up to $5. The social missions earn the rest and pay the most.</p>
     <div class="rows" id="rows"></div>
     <details class="pts-key">
-      <summary>How effort points work</summary>
+      <summary>What everything is worth</summary>
       <ul>
-        <li><b>1 pt</b> per push-up or V-up</li>
-        <li><b>5 pts</b> per minute of doorway stretch</li>
-        <li><b>1 pt</b> per 2 posture-walk steps</li>
-        <li><b>10 pts</b> per daily check-in</li>
-        <li><b>20 pts</b> per lunch invite</li>
-        <li><b>50 pts</b> per eye contact + smile or weekend invite</li>
+        <li><b>$3</b> weekend invite</li>
+        <li><b>$2</b> eye contact + smile</li>
+        <li><b>$1</b> each lunch invite</li>
+        <li><b>20¢</b> each daily check-in</li>
+        <li><b>1¢</b> per push-up or V-up (100 = $1)</li>
+        <li><b>6¢</b> per minute of doorway stretch</li>
+        <li><b>2¢</b> per 5 posture-walk steps</li>
+        <li>Body stuff (workouts + check-ins) tops out at $5. Level 1 tops out at $10.</li>
       </ul>
     </details>
+  </section>
+
+  <section class="bank" aria-labelledby="bank-h">
+    <div class="sec-head">
+      <h2 id="bank-h">Crew's bank</h2>
+      <span class="label">Saved until paid</span>
+    </div>
+    <div class="bank-nums">
+      <div class="bn"><span class="label">Earned</span><span class="num" id="b-earned">$0.00</span></div>
+      <div class="bn"><span class="label">Paid out</span><span class="num" id="b-paid">$0.00</span></div>
+      <div class="bn owed"><span class="label">Owed to Crew</span><span class="num" id="b-owed">$0.00</span></div>
+    </div>
+    <div id="pay-area"></div>
+    <ul class="paylog" id="paylog"></ul>
   </section>
 
   <section class="locked" aria-labelledby="l2-h">
@@ -434,15 +485,18 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       return { r: r, frac: Math.min(1, v / r.target), text: Math.min(v, r.target) + "/" + r.target };
     });
   }
-  // Effort-o-meter: partial credit for everything. 50 pts = $1, 500 pts clears Level 1.
-  var GOAL_PTS = 500, PTS_PER_DOLLAR = 50, REWARD = 10;
-  function effort() {
+  // Effort-o-meter, in cents. Body (workouts + check-ins) caps at $5; social pays the most; Level 1 caps at $10.
+  var REWARD_C = 1000, BODY_CAP_C = 500;
+  function earnings() {
     var t = totals();
-    return Math.floor((t.pushups || 0) + (t.vups || 0) + (t.stretch || 0) * 5 + (t.walk || 0) / 2 +
-      (t.checkin || 0) * 10 + (t.lunch || 0) * 20 + (t.eye || 0) * 50 + (t.weekend || 0) * 50);
+    var body = Math.min(BODY_CAP_C, Math.floor((t.pushups || 0) + (t.vups || 0) + (t.stretch || 0) * 6 +
+      (t.walk || 0) * 0.4 + (t.checkin || 0) * 20));
+    var social = (t.eye || 0) * 200 + (t.weekend || 0) * 300 + (t.lunch || 0) * 100;
+    return { body: body, social: Math.min(social, REWARD_C - body), total: Math.min(REWARD_C, body + social) };
   }
-  function dollars() { return Math.min(REWARD, Math.floor(effort() / PTS_PER_DOLLAR)); }
-  function levelDone() { return effort() >= GOAL_PTS; }
+  function money(c) { return "$" + (c / 100).toFixed(2); }
+  function dollars() { return Math.floor(earnings().total / 100); }
+  function paidOut() { return (state.payouts || []).reduce(function (a, p) { return a + p.cents; }, 0); }
   function streak() {
     var d = new Date(), s = 0;
     while (checkedIn(keyOf(d))) { s++; d = addDays(d, -1); }
@@ -463,19 +517,22 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
         '<span class="rv">' + x.text + "</span></div>";
     });
     document.getElementById("rows").innerHTML = html;
-    var pts = effort(), cash = dollars(), f = Math.min(1, pts / GOAL_PTS), done = pts >= GOAL_PTS;
-    document.getElementById("lvlpct").textContent = "$" + cash;
-    document.getElementById("xpbar").style.width = (cash / REWARD * 100) + "%";
-    document.getElementById("meter-cash").textContent = "$" + cash;
-    document.getElementById("meter-pts").textContent = Math.min(pts, GOAL_PTS) + " / " + GOAL_PTS + " effort points" +
-      (done ? "" : " · " + (PTS_PER_DOLLAR - pts % PTS_PER_DOLLAR) + " to the next $1");
+    var e = earnings(), f = e.total / REWARD_C, done = e.total >= REWARD_C;
+    document.getElementById("lvlpct").textContent = money(e.total);
+    document.getElementById("xpbar").style.width = (f * 100) + "%";
+    document.getElementById("meter-cash").textContent = money(e.total);
+    document.getElementById("h-body").textContent = money(e.body);
+    document.getElementById("h-social").textContent = money(e.social);
+    document.getElementById("hb-body").style.width = (e.body / BODY_CAP_C * 100) + "%";
+    document.getElementById("hb-social").style.width = Math.min(100, e.social / 500 * 100) + "%";
     document.getElementById("m-fill").style.strokeDasharray = (f * Math.PI * 100) + " 400";
     document.getElementById("m-needle").style.transform = "rotate(" + (f * 180) + "deg)";
     document.getElementById("board-card").className = "board" + (done ? " cleared" : "");
-    document.getElementById("board-left").textContent = done ? "Cleared" : (GOAL_PTS - pts) + " pts to go";
+    document.getElementById("board-left").textContent = done ? "Cleared" : money(REWARD_C - e.total) + " to go";
     document.getElementById("board-intro").textContent = done ?
-      "Level 1 cleared. You earned the full $10. Go collect it." :
-      "Everything counts. Every 50 effort points earns $1, and 500 points clears Level 1 for the full $10. The bars below are the plan, but any mix gets you there.";
+      "Level 1 cleared. You earned the full $10. It's in your bank." :
+      e.body >= BODY_CAP_C ? "Body half is maxed at $5. The rest of the $10 comes from the social missions." :
+      "Everything you do earns money. Workouts and check-ins can earn up to $5. The social missions earn the rest and pay the most.";
     document.getElementById("streak").textContent = streak();
     var w = weekData(keyOf(monday(new Date())));
     var mdone = WEEKLY.filter(function (m) { return (w[m.id] || 0) >= m.target; }).length;
@@ -557,7 +614,62 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     document.getElementById("weekly").innerHTML = html;
   }
 
-  function renderAll() { renderHeader(); renderWeek(); renderDaily(); renderWeekly(); }
+  // Bank: earned minus payouts. A parent PIN guards paying out (a light lock, not real security).
+  var pay = { mode: "idle", err: "" };
+  function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function renderBank() {
+    var earned = earnings().total, paid = paidOut(), owed = Math.max(0, earned - paid);
+    document.getElementById("b-earned").textContent = money(earned);
+    document.getElementById("b-paid").textContent = money(paid);
+    document.getElementById("b-owed").textContent = money(owed);
+    var a = document.getElementById("pay-area"), err = pay.err ? '<p class="err" role="alert">' + esc(pay.err) + "</p>" : "";
+    if (pay.mode === "idle") {
+      a.innerHTML = '<button class="btn" id="pay-start">Parent: pay out</button>';
+    } else if (pay.mode === "pin") {
+      var fresh = !state.pin;
+      a.innerHTML = '<form class="payform" id="pin-form">' +
+        (fresh ? '<p class="hint">First time: choose a 4-digit parent PIN. You\'ll use it every time you pay out.</p>' : "") +
+        '<label for="pin-in">' + (fresh ? "New parent PIN" : "Parent PIN") + '<input id="pin-in" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></label>' +
+        '<button class="btn primary" type="submit">' + (fresh ? "Save PIN" : "Unlock") + "</button>" +
+        '<button class="btn" type="button" id="pay-cancel">Cancel</button>' + err + "</form>";
+    } else {
+      a.innerHTML = '<form class="payform" id="pay-form">' +
+        '<label for="pay-amt">Amount ($)<input id="pay-amt" type="number" min="0.01" step="0.01" value="' + (owed / 100).toFixed(2) + '" required></label>' +
+        '<label for="pay-note">Note<input id="pay-note" type="text" maxlength="40" placeholder="Cash, Venmo…"></label>' +
+        '<button class="btn primary" type="submit"' + (owed ? "" : " disabled") + ">Mark as paid</button>" +
+        '<button class="btn" type="button" id="pay-cancel">Lock</button>' +
+        (owed ? "" : '<p class="hint">Nothing owed right now.</p>') + err + "</form>";
+    }
+    var log = (state.payouts || []).slice().reverse();
+    document.getElementById("paylog").innerHTML = log.length ? log.map(function (p) {
+      return '<li><span class="pd">' + fromKey(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + "</span>" +
+        '<span class="pa">' + money(p.cents) + '</span><span class="pn">' + esc(p.note || "Paid") + "</span>" +
+        (pay.mode === "open" ? '<button class="btn" data-unpay="' + p.id + '" aria-label="Remove this payout">Remove</button>' : "") + "</li>";
+    }).join("") : '<li class="empty">No payouts yet.</li>';
+  }
+
+  document.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (e.target.id === "pin-form") {
+      var v = document.getElementById("pin-in").value;
+      if (!/^[0-9]{4}$/.test(v)) { pay.err = "The PIN is 4 digits."; }
+      else if (!state.pin) { state.pin = v; save(); pay = { mode: "open", err: "" }; }
+      else if (v === state.pin) { pay = { mode: "open", err: "" }; }
+      else { pay.err = "That PIN doesn't match. Try again."; }
+      renderBank();
+    }
+    if (e.target.id === "pay-form") {
+      var owed = Math.max(0, earnings().total - paidOut());
+      var c = Math.round(parseFloat(document.getElementById("pay-amt").value) * 100);
+      if (!(c > 0)) { pay.err = "Enter an amount above $0."; return renderBank(); }
+      if (c > owed) { pay.err = "That's more than the " + money(owed) + " owed."; return renderBank(); }
+      state.payouts = state.payouts || [];
+      state.payouts.push({ id: Date.now().toString(36), date: todayKey, cents: c, note: document.getElementById("pay-note").value.trim() });
+      save(); pay = { mode: "idle", err: "" }; renderBank(); burst();
+    }
+  });
+
+  function renderAll() { renderHeader(); renderWeek(); renderDaily(); renderWeekly(); renderBank(); }
 
   function toggleGoal(id, force) {
     var d = state.days[selected] || (state.days[selected] = {});
@@ -597,6 +709,12 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (t.dataset.goal) return toggleGoal(t.dataset.goal);
     if (t.dataset.more) return toggleGoal(t.dataset.more, +t.dataset.d);
     if (t.dataset.day) { selected = t.dataset.day; renderWeek(); renderDaily(); return; }
+    if (t.id === "pay-start") { pay = { mode: "pin", err: "" }; renderBank(); var pi = document.getElementById("pin-in"); if (pi) pi.focus(); return; }
+    if (t.id === "pay-cancel") { pay = { mode: "idle", err: "" }; return renderBank(); }
+    if (t.dataset.unpay) {
+      state.payouts = (state.payouts || []).filter(function (p) { return p.id !== t.dataset.unpay; });
+      save(); return renderBank();
+    }
     if (t.dataset.m) {
       var w = weekData(keyOf(monday(new Date())));
       var m = WEEKLY.filter(function (x) { return x.id === t.dataset.m; })[0];
@@ -650,8 +768,8 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   // Meter ticks: one per $1, labels at $0, $5, $10
   (function () {
     var g = "", NS = 120;
-    for (var i = 0; i <= REWARD; i++) {
-      var a = Math.PI - i / REWARD * Math.PI, big = i % 5 === 0;
+    for (var i = 0; i <= 10; i++) {
+      var a = Math.PI - i / 10 * Math.PI, big = i % 5 === 0;
       var r1 = big ? 78 : 84, r2 = 92, c = Math.cos(a), s2 = Math.sin(a);
       g += '<line class="m-tick' + (big ? " big" : "") + '" x1="' + (NS + c * r1) + '" y1="' + (NS - s2 * r1) +
         '" x2="' + (NS + c * r2) + '" y2="' + (NS - s2 * r2) + '"/>';
