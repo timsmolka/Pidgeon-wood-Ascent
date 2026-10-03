@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crew's Goals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one scoreboard-style column. Player header, then a week strip, today's four reps, and this week's three missions. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --ink: #111a2e;
+  --muted: #56627c;
+  --line: #d5dbe7;
+  --accent: #2e55e6;
+  --accent-soft: #e2e8ff;
+  --on-accent: #ffffff;
+  --gold: #c98f00;
+  --gold-soft: #fff3cf;
+  --done: #10935f;
+  --done-soft: #dcf3e8;
+  --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1020; --surface: #131b2e; --ink: #e8edfa; --muted: #95a1bd; --line: #26314b;
+    --accent: #7090ff; --accent-soft: #1b2650; --on-accent: #0a1020;
+    --gold: #ffc940; --gold-soft: #3a2e0c; --done: #3ad69a; --done-soft: #10301f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1020; --surface: #131b2e; --ink: #e8edfa; --muted: #95a1bd; --line: #26314b;
+  --accent: #7090ff; --accent-soft: #1b2650; --on-accent: #0a1020;
+  --gold: #ffc940; --gold-soft: #3a2e0c; --done: #3ad69a; --done-soft: #10301f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 36px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; text-transform: uppercase; letter-spacing: 0.01em; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+
+/* Header */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 16px 24px; align-items: end; }
+.hero h1 { font-size: clamp(56px, 15vw, 104px); font-weight: 900; line-height: 0.85; }
+.hero h1 span { color: var(--accent); }
+.hero p { margin: 10px 0 0; color: var(--muted); max-width: 40ch; }
+.jersey {
+  width: 112px; aspect-ratio: 1; max-width: 100%;
+  border-radius: 20px; background: var(--accent); color: var(--on-accent);
+  display: grid; place-items: center; align-content: center; text-align: center;
+}
+.jersey .num { font-size: 64px; font-weight: 900; line-height: 0.9; }
+.jersey small { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+
+.stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat { border-top: 3px solid var(--ink); padding-top: 8px; min-width: 0; }
+.stat .num { font-size: 36px; font-weight: 800; line-height: 1.1; display: block; }
+.stat .sub { font-size: 13px; color: var(--muted); }
+.xpbar { height: 6px; background: var(--line); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+.xpbar i { display: block; height: 100%; background: var(--gold); width: 0; transition: width .5s ease; }
+
+/* Level board */
+.board { background: var(--surface); border: 2px solid var(--ink); border-radius: 20px; padding: 20px; }
+.board.cleared { border-color: var(--gold); background: var(--gold-soft); }
+.board-intro { margin: 0 0 16px; color: var(--muted); max-width: 60ch; }
+.board.cleared .board-intro { color: var(--ink); font-weight: 600; font-size: 18px; }
+.rows { display: grid; gap: 12px; }
+.row { display: grid; grid-template-columns: minmax(0, 9.5rem) 1fr auto; gap: 12px; align-items: center; }
+.row .rl { font-weight: 700; min-width: 0; }
+.row .rl small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
+.row .bar { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; }
+.row .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 6px; transition: width .5s ease; }
+.row.full .bar i { background: var(--done); }
+.row .rv { font-family: var(--font-display); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; text-align: right; min-width: 4.5ch; }
+.row.full .rv { color: var(--done); }
+
+/* Effort-o-meter */
+.meter { display: grid; justify-items: center; margin: 4px 0 16px; }
+.meter svg { width: 100%; max-width: 340px; height: auto; display: block; overflow: visible; }
+.m-track, .m-fill { fill: none; stroke-width: 18; stroke-linecap: round; }
+.m-track { stroke: var(--line); }
+.m-fill { stroke: var(--gold); stroke-dasharray: 0 400; transition: stroke-dasharray .8s cubic-bezier(.2,.8,.2,1); }
+.m-tick { stroke: var(--muted); stroke-width: 2; }
+.m-tick.big { stroke: var(--ink); stroke-width: 3; }
+.m-lab { fill: var(--muted); font: 700 12px var(--font-body); text-anchor: middle; }
+.m-needle { transform-box: view-box; transform-origin: 120px 120px; transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+.m-needle line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.m-needle circle { fill: var(--ink); }
+.m-read { display: grid; justify-items: center; margin-top: -6px; text-align: center; }
+.m-name { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.m-cash { font-size: 64px; font-weight: 900; line-height: 1; color: var(--ink); }
+.m-pts { font-size: 14px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pts-key { margin-top: 16px; font-size: 14px; color: var(--muted); }
+.pts-key summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.pts-key ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 2px; }
+.pts-key b { color: var(--ink); }
+
+/* Section heads */
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.sec-head h2 { font-size: 34px; font-weight: 800; line-height: 1; }
+.sec-head .label { text-align: right; }
+
+/* Week strip */
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.day {
+  border: 2px solid transparent; background: var(--surface); border-radius: 12px;
+  padding: 8px 4px 10px; display: grid; justify-items: center; gap: 2px; min-width: 0;
+}
+.day[disabled] { opacity: 0.45; cursor: default; }
+.day .dn { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
+.day .dd { font-family: var(--font-display); font-size: 24px; font-weight: 800; line-height: 1.1; }
+.day .bars { display: flex; gap: 2px; margin-top: 4px; }
+.day .bars b { width: 6px; height: 6px; border-radius: 2px; background: var(--line); }
+.day .bars b.on { background: var(--done); }
+.day.full { background: var(--done-soft); }
+.day .bars b.ci { border-radius: 50%; margin-right: 3px; }
+.day .bars b.ci.on { background: var(--accent); }
+.checkin { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px;
+  border-radius: 999px; background: var(--accent-soft); font-weight: 700; font-size: 14px; }
+.ci-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
+.ci-dot::after { content: ""; width: 5px; height: 9px; border: solid var(--on-accent); border-width: 0 2.5px 2.5px 0; transform: translate(0, -1px) rotate(45deg); }
+.day[aria-current="date"] .dn { color: var(--accent); }
+.day.sel { border-color: var(--ink); }
+
+/* Daily list */
+.list { display: grid; gap: 10px; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: var(--surface); border-radius: 16px; padding: 14px 16px;
+  border: 2px solid var(--line); transition: border-color .2s, background .2s;
+}
+.goal.is-done { border-color: var(--done); background: var(--done-soft); }
+.check {
+  width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--line);
+  background: transparent; display: grid; place-items: center; padding: 0;
+}
+.check svg { width: 24px; height: 24px; stroke: var(--surface); stroke-width: 3.5; fill: none; opacity: 0; transform: scale(.4); transition: transform .2s, opacity .2s; }
+.is-done .check { background: var(--done); border-color: var(--done); }
+.is-done .check svg { opacity: 1; transform: scale(1); stroke: var(--surface); }
+.goal-body { min-width: 0; }
+.goal-body h3 { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.goal-body p { margin: 3px 0 0; font-size: 14px; color: var(--muted); }
+.target { text-align: right; }
+.target .num { font-size: 34px; font-weight: 900; line-height: 1; display: block; }
+.target .label { font-size: 11px; }
+.timer-row { grid-column: 2 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn {
+  border: 2px solid var(--ink); background: transparent; border-radius: 999px;
+  padding: 6px 14px; font-weight: 700; font-size: 14px;
+}
+.btn.primary { background: var(--ink); color: var(--bg); }
+.clock { font-size: 28px; font-weight: 800; }
+.more { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.timer-row .clock + .btn + .more, .timer-row .btn + .more { margin-left: auto; }
+.more .btn { min-width: 3.2rem; padding: 6px 10px; }
+.more .btn.add { background: var(--ink); color: var(--bg); }
+.more .btn[disabled] { opacity: .35; cursor: default; }
+.target .of { font-size: .55em; color: var(--muted); }
+/* Meter halves + bank */
+.halves { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 420px; margin-top: 14px; }
+.half { display: grid; gap: 2px; background: var(--bg); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.half .num { font-size: 26px; font-weight: 800; line-height: 1.1; }
+.half small { font-size: 12px; color: var(--muted); }
+.hb { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.hb i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .6s ease; }
+.half.social .hb i { background: var(--gold); }
+.bank { background: var(--surface); border-radius: 20px; padding: 20px; border: 2px solid var(--line); display: grid; gap: 16px; }
+.bank .sec-head { margin-bottom: 0; }
+.bank-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bn { display: grid; gap: 2px; min-width: 0; }
+.bn .num { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.bn.owed .num { font-size: 40px; color: var(--done); }
+.payform { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; background: var(--bg); border-radius: 14px; padding: 14px; }
+.payform label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.payform input { font: inherit; font-size: 18px; color: var(--ink); background: var(--surface); border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 9rem; max-width: 100%; }
+.payform input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.payform .err { width: 100%; color: var(--ink); font-weight: 600; font-size: 14px; margin: 0; }
+.payform .hint { width: 100%; margin: 0; font-size: 14px; color: var(--muted); }
+.paylog { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.paylog li { display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; font-size: 15px; }
+.paylog .pd { color: var(--muted); min-width: 5.5rem; }
+.paylog .pa { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
+.paylog .pn { flex: 1; min-width: 0; color: var(--muted); overflow-wrap: anywhere; }
+.paylog .empty { color: var(--muted); border: 0; padding: 0; }
+@media (max-width: 480px) {
+  .bank { padding: 16px; }
+  .bank-nums { grid-template-columns: 1fr 1fr; }
+  .bn.owed { grid-column: 1 / -1; }
+  .half .num { font-size: 22px; }
+}
+.locked { border: 2px dashed var(--line); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.locked .lk { width: 56px; height: 56px; border-radius: 14px; background: var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 900; font-size: 32px; color: var(--muted); }
+.locked h2 { font-size: 26px; font-weight: 800; line-height: 1.05; }
+.locked p { margin: 4px 0 0; color: var(--muted); }
+
+.banner {
+  margin-top: 12px; border-radius: 14px; padding: 12px 16px; font-weight: 600;
+  background: var(--accent-soft); color: var(--ink);
+}
+.banner.win { background: var(--done-soft); }
+
+/* Weekly missions */
+.mission {
+  background: var(--surface); border-radius: 16px; padding: 16px; border: 2px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center;
+}
+.mission.is-done { border-color: var(--gold); background: var(--gold-soft); }
+.mission h3 { font-size: 26px; font-weight: 800; line-height: 1.05; }
+.mission .detail { font-size: 14px; color: var(--muted); font-weight: 600; }
+.mission .tip { grid-column: 1 / -1; margin: 0; font-size: 15px; max-width: 62ch; }
+.mission .tip q { font-weight: 700; }
+.counter { display: flex; align-items: center; gap: 8px; }
+.counter .num { font-size: 36px; font-weight: 900; min-width: 2.6ch; text-align: center; line-height: 1; }
+.counter .of { color: var(--muted); font-size: 20px; }
+.step {
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink);
+  background: transparent; font-size: 22px; font-weight: 700; line-height: 1; padding: 0;
+}
+.step.plus { background: var(--ink); color: var(--bg); }
+.pips { grid-column: 1 / -1; display: flex; gap: 6px; }
+.pips b { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.pips b.on { background: var(--gold); }
+
+.note { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+#confetti { position: fixed; inset: 0; pointer-events: none; width: 100%; height: 100%; }
+
+@media (max-width: 480px) {
+  .jersey { width: 88px; border-radius: 16px; }
+  .jersey .num { font-size: 48px; }
+  .stat .num { font-size: 28px; }
+  .goal { grid-template-columns: auto 1fr; }
+  .target { grid-column: 2; text-align: left; display: flex; gap: 6px; align-items: baseline; }
+  .target .num { font-size: 22px; }
+  .day .dd { font-size: 20px; }
+  .mission { grid-template-columns: 1fr; }
+  .board { padding: 16px; }
+  .row { grid-template-columns: 1fr auto; gap: 4px 12px; }
+  .row .bar { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="label" id="eyebrow">Crew · Season 1</div>
+      <h1>Level<br><span>up.</span></h1>
+      <p>Check in every day. Four quick reps. Three missions a week. It all adds up toward Level 1 and a $10 reward.</p>
+      <div class="checkin" role="status"><span class="ci-dot" aria-hidden="true"></span><span id="checkin-text">Checked in today. That counts.</span></div>
+    </div>
+    <div class="jersey" aria-label="Current level">
+      <small>Level</small>
+      <span class="num">1</span>
+      <small>$10 reward</small>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="label">Level 1</span>
+        <span class="num" id="lvlpct">$0</span>
+        <div class="xpbar"><i id="xpbar"></i></div>
+        <span class="sub">earned of $10</span>
+      </div>
+      <div class="stat">
+        <span class="label">Streak</span>
+        <span class="num" id="streak">0</span>
+        <span class="sub">days checked in</span>
+      </div>
+      <div class="stat">
+        <span class="label">Missions</span>
+        <span class="num" id="mcount">0/3</span>
+        <span class="sub">done this week</span>
+      </div>
+    </div>
+  </header>
+
+  <section aria-labelledby="board-h" class="board" id="board-card">
+    <div class="sec-head">
+      <h2 id="board-h">Level 1 · $10</h2>
+      <span class="label" id="board-left">$10.00 to go</span>
+    </div>
+    <div class="meter">
+      <svg viewBox="0 0 240 136" role="img" aria-labelledby="meter-cash meter-pts">
+        <path class="m-track" d="M20 120 A100 100 0 0 1 220 120"/>
+        <path class="m-fill" id="m-fill" d="M20 120 A100 100 0 0 1 220 120"/>
+        <g id="m-ticks"></g>
+        <g class="m-needle" id="m-needle"><line x1="120" y1="120" x2="38" y2="120"/><circle cx="120" cy="120" r="7"/></g>
+      </svg>
+      <div class="m-read">
+        <span class="m-name">Effort-o-meter</span>
+        <span class="num m-cash" id="meter-cash">$0.00</span>
+      </div>
+      <div class="halves">
+        <div class="half"><span class="label">Body</span><span class="num" id="h-body">$0.00</span><span class="hb"><i id="hb-body"></i></span><small>up to $5</small></div>
+        <div class="half social"><span class="label">Social</span><span class="num" id="h-social">$0.00</span><span class="hb"><i id="hb-social"></i></span><small>the other $5</small></div>
+      </div>
+    </div>
+    <p class="board-intro" id="board-intro">Everything you do earns money. Workouts and check-ins can earn up to $5. The social missions earn the rest and pay the most.</p>
+    <div class="rows" id="rows"></div>
+    <details class="pts-key">
+      <summary>What everything is worth</summary>
+      <ul>
+        <li><b>$3</b> weekend invite</li>
+        <li><b>$2</b> eye contact + smile</li>
+        <li><b>$1</b> each lunch invite</li>
+        <li><b>20¢</b> each daily check-in</li>
+        <li><b>1¢</b> per push-up or V-up (100 = $1)</li>
+        <li><b>6¢</b> per minute of doorway stretch</li>
+        <li><b>2¢</b> per 5 posture-walk steps</li>
+        <li>Body stuff (workouts + check-ins) tops out at $5. Level 1 tops out at $10.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="bank" aria-labelledby="bank-h">
+    <div class="sec-head">
+      <h2 id="bank-h">Crew's bank</h2>
+      <span class="label">Saved until paid</span>
+    </div>
+    <div class="bank-nums">
+      <div class="bn"><span class="label">Earned</span><span class="num" id="b-earned">$0.00</span></div>
+      <div class="bn"><span class="label">Paid out</span><span class="num" id="b-paid">$0.00</span></div>
+      <div class="bn owed"><span class="label">Owed to Crew</span><span class="num" id="b-owed">$0.00</span></div>
+    </div>
+    <div id="pay-area"></div>
+    <ul class="paylog" id="paylog"></ul>
+  </section>
+
+  <section class="locked" aria-labelledby="l2-h">
+    <div class="lk" aria-hidden="true">2</div>
+    <div>
+      <h2 id="l2-h">Level 2 · Locked</h2>
+      <p>New missions and obstacles. Unlocks when Level 1 is cleared.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="week-h">
+    <div class="sec-head">
+      <h2 id="week-h">This week</h2>
+      <span class="label">Tap a day to check it off</span>
+    </div>
+    <div class="week" id="week"></div>
+  </section>
+
+  <section aria-labelledby="daily-h">
+    <div class="sec-head">
+      <h2 id="daily-h">Today</h2>
+      <span class="label" id="daily-count">0 of 4 done</span>
+    </div>
+    <div class="list" id="daily"></div>
+    <div class="banner" id="daily-banner" role="status"></div>
+  </section>
+
+  <section aria-labelledby="weekly-h">
+    <div class="sec-head">
+      <h2 id="weekly-h">Weekly missions</h2>
+      <span class="label">Resets Monday</span>
+    </div>
+    <div class="list" id="weekly"></div>
+  </section>
+
+  <p class="note">Every invite counts, even if they say no, and every rep moves the meter. Asking is the hard part, and you did it. Progress is saved on this device.</p>
+</div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+(function () {
+  var DAILY = [
+    { id: "pushups", name: "Push-ups", n: 20, unit: "reps", adds: [1, 5, 20],
+      tip: "Body straight from head to heels. Two sets of 10 is fine." },
+    { id: "vups", name: "V-ups", n: 20, unit: "reps", adds: [1, 5, 20],
+      tip: "Lie flat, lift arms and legs together, reach for your toes. Slow beats fast." },
+    { id: "stretch", name: "Doorway stretch", n: 5, unit: "min", timer: 300, adds: [1, 5],
+      tip: "Forearms on the door frame, elbows at shoulder height. Lean through until you feel it across your chest." },
+    { id: "walk", name: "Posture walk", n: 20, unit: "steps", adds: [1, 5, 20],
+      tip: "Shoulders back and down, chin level, eyes forward. Walk like you belong there, because you do." }
+  ];
+  var WEEKLY = [
+    { id: "eye", name: "Eye contact + smile", detail: "With a girl · 1 second", target: 1,
+      tip: "One second of eye contact and a smile. You don't have to say anything. Passing in the hall or sitting down in class both work." },
+    { id: "weekend", name: "Invite a buddy over", detail: "This weekend", target: 1,
+      tip: "<q>Want to come over Saturday? We could play ___.</q> If they can't make it, ask someone else or try again next week." },
+    { id: "lunch", name: "Invite a buddy to lunch", detail: "3 times this week", target: 3,
+      tip: "<q>Hey, want to sit together at lunch?</q> Same buddy or different ones, every ask counts." }
+  ];
+  // Level 1: running totals across every day and week. Clearing all six earns $10.
+  var LEVEL = [
+    { id: "pushups", label: "Push-ups", target: 100, per: 20, unit: "" },
+    { id: "vups", label: "V-ups", target: 100, per: 20, unit: "" },
+    { id: "stretch", label: "Doorway stretch", target: 20, per: 5, unit: " min" },
+    { id: "walk", label: "Posture walk", target: 100, per: 20, unit: " steps" },
+    { id: "checkin", label: "Check-ins", note: "Open the app any day", target: 7 },
+    { id: "eye", label: "Eye contact + smile", target: 1, mission: true },
+    { id: "invite", label: "Invite", note: "1 weekend or 3 lunches", invite: true }
+  ];
+  var KEY = "crew-goals-v2";
+
+  var state = { days: {}, weeks: {}, checkins: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved && saved.days && saved.weeks) state = saved;
+    else {
+      // v1 saved whole sets (true or a count); v2 saves reps / minutes / steps
+      var old = JSON.parse(localStorage.getItem("crew-goals-v1") || "null");
+      if (old && old.days && old.weeks) {
+        Object.keys(old.days).forEach(function (k) {
+          DAILY.forEach(function (g) {
+            var v = old.days[k][g.id];
+            if (v) old.days[k][g.id] = (v === true ? 1 : +v || 0) * g.n;
+          });
+        });
+        state = old;
+      }
+    }
+  } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function keyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function fromKey(k) { var p = k.split("-"); return new Date(+p[0], p[1] - 1, +p[2]); }
+  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function monday(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var wd = (x.getDay() + 6) % 7; return addDays(x, -wd); }
+
+  var todayKey = keyOf(new Date());
+
+  // Opening the app is a check-in, even on a day nothing else gets done
+  function checkIn() { state.checkins = state.checkins || {}; state.checkins[todayKey] = true; save(); }
+  function checkedIn(k) {
+    return !!(state.checkins && state.checkins[k]) || DAILY.some(function (g) { return amt(k, g.id) > 0; });
+  }
+  var selected = todayKey;
+
+  // A day's goal holds the amount done: reps, minutes or steps
+  function amt(k, id) { return +((state.days[k] || {})[id]) || 0; }
+  function goalOf(id) { return DAILY.filter(function (g) { return g.id === id; })[0]; }
+  function dayDone(k) { return DAILY.filter(function (g) { return amt(k, g.id) >= g.n; }).length; }
+  function weekData(k) { return state.weeks[k] || (state.weeks[k] = {}); }
+
+  function totals() {
+    var t = {};
+    Object.keys(state.days).forEach(function (k) {
+      DAILY.forEach(function (g) { t[g.id] = (t[g.id] || 0) + amt(k, g.id); });
+    });
+    var seen = {};
+    Object.keys(state.checkins || {}).concat(Object.keys(state.days)).forEach(function (k) {
+      if (!seen[k] && checkedIn(k)) { seen[k] = true; t.checkin = (t.checkin || 0) + 1; }
+    });
+    Object.keys(state.weeks).forEach(function (k) {
+      WEEKLY.forEach(function (m) { t[m.id] = (t[m.id] || 0) + (state.weeks[k][m.id] || 0); });
+    });
+    return t;
+  }
+  // Each row: { value text, fraction 0..1 }
+  function levelRows() {
+    var t = totals();
+    return LEVEL.map(function (r) {
+      if (r.invite) {
+        var we = t.weekend || 0, lu = t.lunch || 0;
+        return { r: r, frac: Math.min(1, Math.max(we / 1, lu / 3)),
+          text: we >= 1 ? "Weekend ✓" : lu >= 3 ? "Lunch ✓" : we + "/1 · " + lu + "/3" };
+      }
+      var v = t[r.id] || 0;
+      return { r: r, frac: Math.min(1, v / r.target), text: Math.min(v, r.target) + "/" + r.target };
+    });
+  }
+  // Effort-o-meter, in cents. Body (workouts + check-ins) caps at $5; social pays the most; Level 1 caps at $10.
+  var REWARD_C = 1000, BODY_CAP_C = 500;
+  function earnings() {
+    var t = totals();
+    var body = Math.min(BODY_CAP_C, Math.floor((t.pushups || 0) + (t.vups || 0) + (t.stretch || 0) * 6 +
+      (t.walk || 0) * 0.4 + (t.checkin || 0) * 20));
+    var social = (t.eye || 0) * 200 + (t.weekend || 0) * 300 + (t.lunch || 0) * 100;
+    return { body: body, social: Math.min(social, REWARD_C - body), total: Math.min(REWARD_C, body + social) };
+  }
+  function money(c) { return "$" + (c / 100).toFixed(2); }
+  function dollars() { return Math.floor(earnings().total / 100); }
+  function paidOut() { return (state.payouts || []).reduce(function (a, p) { return a + p.cents; }, 0); }
+  function streak() {
+    var d = new Date(), s = 0;
+    while (checkedIn(keyOf(d))) { s++; d = addDays(d, -1); }
+    return s;
+  }
+
+  var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var timer = { left: 300, running: false, id: null };
+
+  function fmt(s) { return Math.floor(s / 60) + ":" + pad(s % 60); }
+
+  function renderHeader() {
+    var rows = levelRows(), html = "";
+    rows.forEach(function (x) {
+      html += '<div class="row' + (x.frac >= 1 ? " full" : "") + '">' +
+        '<span class="rl">' + x.r.label + (x.r.note ? "<small>" + x.r.note + "</small>" : "") + "</span>" +
+        '<span class="bar"><i style="width:' + (x.frac * 100) + '%"></i></span>' +
+        '<span class="rv">' + x.text + "</span></div>";
+    });
+    document.getElementById("rows").innerHTML = html;
+    var e = earnings(), f = e.total / REWARD_C, done = e.total >= REWARD_C;
+    document.getElementById("lvlpct").textContent = money(e.total);
+    document.getElementById("xpbar").style.width = (f * 100) + "%";
+    document.getElementById("meter-cash").textContent = money(e.total);
+    document.getElementById("h-body").textContent = money(e.body);
+    document.getElementById("h-social").textContent = money(e.social);
+    document.getElementById("hb-body").style.width = (e.body / BODY_CAP_C * 100) + "%";
+    document.getElementById("hb-social").style.width = Math.min(100, e.social / 500 * 100) + "%";
+    document.getElementById("m-fill").style.strokeDasharray = (f * Math.PI * 100) + " 400";
+    document.getElementById("m-needle").style.transform = "rotate(" + (f * 180) + "deg)";
+    document.getElementById("board-card").className = "board" + (done ? " cleared" : "");
+    document.getElementById("board-left").textContent = done ? "Cleared" : money(REWARD_C - e.total) + " to go";
+    document.getElementById("board-intro").textContent = done ?
+      "Level 1 cleared. You earned the full $10. It's in your bank." :
+      e.body >= BODY_CAP_C ? "Body half is maxed at $5. The rest of the $10 comes from the social missions." :
+      "Everything you do earns money. Workouts and check-ins can earn up to $5. The social missions earn the rest and pay the most.";
+    document.getElementById("streak").textContent = streak();
+    var w = weekData(keyOf(monday(new Date())));
+    var mdone = WEEKLY.filter(function (m) { return (w[m.id] || 0) >= m.target; }).length;
+    document.getElementById("mcount").textContent = mdone + "/" + WEEKLY.length;
+    var mon = monday(new Date());
+    document.getElementById("eyebrow").textContent = "Crew · Week of " +
+      mon.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  function renderWeek() {
+    var mon = monday(new Date()), html = "";
+    for (var i = 0; i < 7; i++) {
+      var d = addDays(mon, i), k = keyOf(d), c = dayDone(k), future = k > todayKey;
+      var bars = "";
+      for (var j = 0; j < DAILY.length; j++) bars += '<b class="' + (j < c ? "on" : "") + '"></b>';
+      var ci = checkedIn(k);
+      html += '<button class="day' + (c === DAILY.length ? " full" : "") + (ci ? " in" : "") + (k === selected ? " sel" : "") + '"' +
+        (future ? " disabled" : "") + (k === todayKey ? ' aria-current="date"' : "") +
+        ' data-day="' + k + '" aria-label="' + d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + ", " + (ci ? "checked in, " : "") + c + " of 4 done" + '">' +
+        '<span class="dn">' + d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3).toUpperCase() + "</span>" +
+        '<span class="dd">' + d.getDate() + "</span>" +
+        '<span class="bars"><b class="ci' + (ci ? " on" : "") + '"></b>' + bars + "</span></button>";
+    }
+    document.getElementById("week").innerHTML = html;
+  }
+
+  function renderDaily() {
+    var html = "";
+    DAILY.forEach(function (g) {
+      var a = amt(selected, g.id), on = a >= g.n;
+      html += '<div class="goal' + (on ? " is-done" : "") + '">' +
+        '<button class="check" data-goal="' + g.id + '" aria-pressed="' + on + '" aria-label="' + g.name + " done" + '">' + CHECK + "</button>" +
+        '<div class="goal-body"><h3>' + g.name + "</h3><p>" + g.tip + "</p></div>" +
+        '<div class="target"><span class="num">' + (a ? a : g.n) + (a && !on ? '<span class="of">/' + g.n + "</span>" : "") +
+          '</span><span class="label">' + g.unit + (a ? " today" : "") + "</span></div>";
+      var extra = "";
+      if (g.timer) {
+        extra += '<span class="num clock" id="clock">' + fmt(timer.left) + "</span>" +
+          '<button class="btn primary" id="timer-go">' + (timer.running ? "Pause" : timer.left < g.timer ? "Resume" : on ? "Another 5:00" : "Start timer") + "</button>" +
+          (timer.left < g.timer ? '<button class="btn" id="timer-reset">Reset</button>' : "");
+      }
+      extra += '<span class="more">' +
+        '<button class="btn" data-more="' + g.id + '" data-d="-1" aria-label="Remove 1 ' + g.unit + '"' + (a ? "" : " disabled") + ">−1</button>" +
+        g.adds.map(function (n) {
+          return '<button class="btn add" data-more="' + g.id + '" data-d="' + n + '" aria-label="Add ' + n + " " + g.unit + '">+' + n + "</button>";
+        }).join("") + "</span>";
+      if (extra) html += '<div class="timer-row">' + extra + "</div>";
+      html += "</div>";
+    });
+    document.getElementById("daily").innerHTML = html;
+
+    var c = dayDone(selected);
+    var isToday = selected === todayKey;
+    document.getElementById("daily-h").textContent = isToday ? "Today" :
+      fromKey(selected).toLocaleDateString(undefined, { weekday: "long" });
+    document.getElementById("daily-count").textContent = c + " of 4 done";
+    var b = document.getElementById("daily-banner");
+    b.className = "banner" + (c === DAILY.length ? " win" : "");
+    b.textContent = c === DAILY.length ? "All four done. That's a full day. Anything extra still counts toward Level 1." :
+      c === 0 ? (isToday ? "Start with whichever one is easiest." : "Forgot to check these off? Tap them now.") :
+      (DAILY.length - c) + " to go. You're already moving.";
+  }
+
+  function renderWeekly() {
+    var w = weekData(keyOf(monday(new Date()))), html = "";
+    WEEKLY.forEach(function (m) {
+      var v = w[m.id] || 0, done = v >= m.target, pips = "";
+      for (var i = 0; i < m.target; i++) pips += '<b class="' + (i < v ? "on" : "") + '"></b>';
+      html += '<div class="mission' + (done ? " is-done" : "") + '">' +
+        '<div><h3>' + m.name + '</h3><div class="detail">' + m.detail + "</div></div>" +
+        '<div class="counter">' +
+          '<button class="step" data-m="' + m.id + '" data-d="-1" aria-label="Remove one from ' + m.name + '"' + (v === 0 ? " disabled" : "") + ">−</button>" +
+          '<span class="num" aria-live="polite">' + v + '<span class="of">/' + m.target + "</span></span>" +
+          '<button class="step plus" data-m="' + m.id + '" data-d="1" aria-label="Add one to ' + m.name + '">+</button>' +
+        "</div>" +
+        '<div class="pips">' + pips + "</div>" +
+        '<p class="tip">' + m.tip + "</p></div>";
+    });
+    document.getElementById("weekly").innerHTML = html;
+  }
+
+  // Bank: earned minus payouts. A parent PIN guards paying out (a light lock, not real security).
+  var pay = { mode: "idle", err: "" };
+  function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function renderBank() {
+    var earned = earnings().total, paid = paidOut(), owed = Math.max(0, earned - paid);
+    document.getElementById("b-earned").textContent = money(earned);
+    document.getElementById("b-paid").textContent = money(paid);
+    document.getElementById("b-owed").textContent = money(owed);
+    var a = document.getElementById("pay-area"), err = pay.err ? '<p class="err" role="alert">' + esc(pay.err) + "</p>" : "";
+    if (pay.mode === "idle") {
+      a.innerHTML = '<button class="btn" id="pay-start">Parent: pay out</button>';
+    } else if (pay.mode === "pin") {
+      var fresh = !state.pin;
+      a.innerHTML = '<form class="payform" id="pin-form">' +
+        (fresh ? '<p class="hint">First time: choose a 4-digit parent PIN. You\'ll use it every time you pay out.</p>' : "") +
+        '<label for="pin-in">' + (fresh ? "New parent PIN" : "Parent PIN") + '<input id="pin-in" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></label>' +
+        '<button class="btn primary" type="submit">' + (fresh ? "Save PIN" : "Unlock") + "</button>" +
+        '<button class="btn" type="button" id="pay-cancel">Cancel</button>' + err + "</form>";
+    } else {
+      a.innerHTML = '<form class="payform" id="pay-form">' +
+        '<label for="pay-amt">Amount ($)<input id="pay-amt" type="number" min="0.01" step="0.01" value="' + (owed / 100).toFixed(2) + '" required></label>' +
+        '<label for="pay-note">Note<input id="pay-note" type="text" maxlength="40" placeholder="Cash, Venmo…"></label>' +
+        '<button class="btn primary" type="submit"' + (owed ? "" : " disabled") + ">Mark as paid</button>" +
+        '<button class="btn" type="button" id="pay-cancel">Lock</button>' +
+        (owed ? "" : '<p class="hint">Nothing owed right now.</p>') + err + "</form>";
+    }
+    var log = (state.payouts || []).slice().reverse();
+    document.getElementById("paylog").innerHTML = log.length ? log.map(function (p) {
+      return '<li><span class="pd">' + fromKey(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + "</span>" +
+        '<span class="pa">' + money(p.cents) + '</span><span class="pn">' + esc(p.note || "Paid") + "</span>" +
+        (pay.mode === "open" ? '<button class="btn" data-unpay="' + p.id + '" aria-label="Remove this payout">Remove</button>' : "") + "</li>";
+    }).join("") : '<li class="empty">No payouts yet.</li>';
+  }
+
+  document.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (e.target.id === "pin-form") {
+      var v = document.getElementById("pin-in").value;
+      if (!/^[0-9]{4}$/.test(v)) { pay.err = "The PIN is 4 digits."; }
+      else if (!state.pin) { state.pin = v; save(); pay = { mode: "open", err: "" }; }
+      else if (v === state.pin) { pay = { mode: "open", err: "" }; }
+      else { pay.err = "That PIN doesn't match. Try again."; }
+      renderBank();
+    }
+    if (e.target.id === "pay-form") {
+      var owed = Math.max(0, earnings().total - paidOut());
+      var c = Math.round(parseFloat(document.getElementById("pay-amt").value) * 100);
+      if (!(c > 0)) { pay.err = "Enter an amount above $0."; return renderBank(); }
+      if (c > owed) { pay.err = "That's more than the " + money(owed) + " owed."; return renderBank(); }
+      state.payouts = state.payouts || [];
+      state.payouts.push({ id: Date.now().toString(36), date: todayKey, cents: c, note: document.getElementById("pay-note").value.trim() });
+      save(); pay = { mode: "idle", err: "" }; renderBank(); burst();
+    }
+  });
+
+  function renderAll() { renderHeader(); renderWeek(); renderDaily(); renderWeekly(); renderBank(); }
+
+  function toggleGoal(id, force) {
+    var d = state.days[selected] || (state.days[selected] = {});
+    var before = dayDone(selected), wasCash = dollars();
+    var g = goalOf(id), a = amt(selected, id);
+    d[id] = force === undefined ? (a >= g.n ? 0 : g.n) : Math.max(0, Math.min(g.n * 10, a + force));
+    save(); renderAll();
+    if ((before < DAILY.length && dayDone(selected) === DAILY.length) || dollars() > wasCash) burst();
+  }
+
+  function beep() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.25, 0.5].forEach(function (t) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.2, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.2);
+      });
+    } catch (e) {}
+  }
+
+  function tick() {
+    timer.left--;
+    var c = document.getElementById("clock");
+    if (c) c.textContent = fmt(timer.left);
+    if (timer.left <= 0) {
+      clearInterval(timer.id); timer.running = false; timer.left = 300;
+      beep(); toggleGoal("stretch", 5);
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button");
+    if (!t || t.disabled) return;
+    if (t.dataset.goal) return toggleGoal(t.dataset.goal);
+    if (t.dataset.more) return toggleGoal(t.dataset.more, +t.dataset.d);
+    if (t.dataset.day) { selected = t.dataset.day; renderWeek(); renderDaily(); return; }
+    if (t.id === "pay-start") { pay = { mode: "pin", err: "" }; renderBank(); var pi = document.getElementById("pin-in"); if (pi) pi.focus(); return; }
+    if (t.id === "pay-cancel") { pay = { mode: "idle", err: "" }; return renderBank(); }
+    if (t.dataset.unpay) {
+      state.payouts = (state.payouts || []).filter(function (p) { return p.id !== t.dataset.unpay; });
+      save(); return renderBank();
+    }
+    if (t.dataset.m) {
+      var w = weekData(keyOf(monday(new Date())));
+      var m = WEEKLY.filter(function (x) { return x.id === t.dataset.m; })[0];
+      var before = w[m.id] || 0, wasCash = dollars();
+      w[m.id] = Math.max(0, Math.min(9, before + +t.dataset.d));
+      save(); renderAll();
+      if ((before < m.target && w[m.id] >= m.target) || dollars() > wasCash) burst();
+      return;
+    }
+    if (t.id === "timer-go") {
+      if (timer.running) { clearInterval(timer.id); timer.running = false; }
+      else { timer.running = true; timer.id = setInterval(tick, 1000); }
+      renderDaily(); return;
+    }
+    if (t.id === "timer-reset") {
+      clearInterval(timer.id); timer.running = false; timer.left = 300; renderDaily();
+    }
+  });
+
+  // Confetti
+  var cv = document.getElementById("confetti"), cx = cv.getContext("2d"), parts = [], raf = null;
+  function burst() {
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var cs = getComputedStyle(document.documentElement);
+    var cols = ["--accent", "--gold", "--done"].map(function (v) { return cs.getPropertyValue(v).trim(); });
+    cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+    for (var i = 0; i < 140; i++) {
+      parts.push({ x: cv.width / 2, y: cv.height * 0.4, vx: (Math.random() - 0.5) * 22 * devicePixelRatio,
+        vy: (-Math.random() * 18 - 6) * devicePixelRatio, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+        s: (6 + Math.random() * 6) * devicePixelRatio, c: cols[i % 3], life: 0 });
+    }
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+  function frame() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(function (p) { return p.life < 140 && p.y < cv.height + 40; });
+    parts.forEach(function (p) {
+      p.life++; p.vy += 0.6 * devicePixelRatio; p.vx *= 0.98; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+      cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore();
+    });
+    raf = parts.length ? requestAnimationFrame(frame) : (cx.clearRect(0, 0, cv.width, cv.height), null);
+  }
+
+  // Roll over to a new day if the page stays open past midnight
+  setInterval(function () {
+    var k = keyOf(new Date());
+    if (k !== todayKey) { if (selected === todayKey) selected = k; todayKey = k; checkIn(); renderAll(); }
+  }, 60000);
+
+  // Meter ticks: one per $1, labels at $0, $5, $10
+  (function () {
+    var g = "", NS = 120;
+    for (var i = 0; i <= 10; i++) {
+      var a = Math.PI - i / 10 * Math.PI, big = i % 5 === 0;
+      var r1 = big ? 78 : 84, r2 = 92, c = Math.cos(a), s2 = Math.sin(a);
+      g += '<line class="m-tick' + (big ? " big" : "") + '" x1="' + (NS + c * r1) + '" y1="' + (NS - s2 * r1) +
+        '" x2="' + (NS + c * r2) + '" y2="' + (NS - s2 * r2) + '"/>';
+      if (big) g += '<text class="m-lab" x="' + (NS + c * 64) + '" y="' + (NS - s2 * 64 + 4) + '">$' + i + "</text>";
+    }
+    document.getElementById("m-ticks").innerHTML = g;
+  })();
+
+  checkIn();
+  renderAll();
+})();
+</script>
+</body>
+</html>
