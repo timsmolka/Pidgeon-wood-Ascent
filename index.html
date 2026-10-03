@@ -92,6 +92,27 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .row .rv { font-family: var(--font-display); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; text-align: right; min-width: 4.5ch; }
 .row.full .rv { color: var(--done); }
 
+/* Effort-o-meter */
+.meter { display: grid; justify-items: center; margin: 4px 0 16px; }
+.meter svg { width: 100%; max-width: 340px; height: auto; display: block; overflow: visible; }
+.m-track, .m-fill { fill: none; stroke-width: 18; stroke-linecap: round; }
+.m-track { stroke: var(--line); }
+.m-fill { stroke: var(--gold); stroke-dasharray: 0 400; transition: stroke-dasharray .8s cubic-bezier(.2,.8,.2,1); }
+.m-tick { stroke: var(--muted); stroke-width: 2; }
+.m-tick.big { stroke: var(--ink); stroke-width: 3; }
+.m-lab { fill: var(--muted); font: 700 12px var(--font-body); text-anchor: middle; }
+.m-needle { transform-box: view-box; transform-origin: 120px 120px; transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+.m-needle line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.m-needle circle { fill: var(--ink); }
+.m-read { display: grid; justify-items: center; margin-top: -6px; text-align: center; }
+.m-name { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.m-cash { font-size: 64px; font-weight: 900; line-height: 1; color: var(--ink); }
+.m-pts { font-size: 14px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pts-key { margin-top: 16px; font-size: 14px; color: var(--muted); }
+.pts-key summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.pts-key ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 2px; }
+.pts-key b { color: var(--ink); }
+
 /* Section heads */
 .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .sec-head h2 { font-size: 34px; font-weight: 800; line-height: 1; }
@@ -226,9 +247,9 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     <div class="stats">
       <div class="stat">
         <span class="label">Level 1</span>
-        <span class="num" id="lvlpct">0%</span>
+        <span class="num" id="lvlpct">$0</span>
         <div class="xpbar"><i id="xpbar"></i></div>
-        <span class="sub">of the way to $10</span>
+        <span class="sub">earned of $10</span>
       </div>
       <div class="stat">
         <span class="label">Streak</span>
@@ -246,10 +267,34 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   <section aria-labelledby="board-h" class="board" id="board-card">
     <div class="sec-head">
       <h2 id="board-h">Level 1 · $10</h2>
-      <span class="label" id="board-left">6 bars to fill</span>
+      <span class="label" id="board-left">500 pts to go</span>
     </div>
-    <p class="board-intro" id="board-intro">Fill every bar to clear Level 1 and earn $10. Your daily check-offs and weekly missions add up here automatically.</p>
+    <div class="meter">
+      <svg viewBox="0 0 240 136" role="img" aria-labelledby="meter-cash meter-pts">
+        <path class="m-track" d="M20 120 A100 100 0 0 1 220 120"/>
+        <path class="m-fill" id="m-fill" d="M20 120 A100 100 0 0 1 220 120"/>
+        <g id="m-ticks"></g>
+        <g class="m-needle" id="m-needle"><line x1="120" y1="120" x2="38" y2="120"/><circle cx="120" cy="120" r="7"/></g>
+      </svg>
+      <div class="m-read">
+        <span class="m-name">Effort-o-meter</span>
+        <span class="num m-cash" id="meter-cash">$0</span>
+        <span class="m-pts" id="meter-pts">0 / 500 effort points</span>
+      </div>
+    </div>
+    <p class="board-intro" id="board-intro">Everything counts. Every 50 effort points earns $1, and 500 points clears Level 1 for the full $10. The bars below are the plan, but any mix gets you there.</p>
     <div class="rows" id="rows"></div>
+    <details class="pts-key">
+      <summary>How effort points work</summary>
+      <ul>
+        <li><b>1 pt</b> per push-up or V-up</li>
+        <li><b>5 pts</b> per minute of doorway stretch</li>
+        <li><b>1 pt</b> per 2 posture-walk steps</li>
+        <li><b>10 pts</b> per daily check-in</li>
+        <li><b>20 pts</b> per lunch invite</li>
+        <li><b>50 pts</b> per eye contact + smile or weekend invite</li>
+      </ul>
+    </details>
   </section>
 
   <section class="locked" aria-labelledby="l2-h">
@@ -285,7 +330,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     <div class="list" id="weekly"></div>
   </section>
 
-  <p class="note">Every invite counts, even if they say no. Asking is the hard part, and you did it. Progress is saved on this device.</p>
+  <p class="note">Every invite counts, even if they say no, and every rep moves the meter. Asking is the hard part, and you did it. Progress is saved on this device.</p>
 </div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
@@ -389,7 +434,15 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       return { r: r, frac: Math.min(1, v / r.target), text: Math.min(v, r.target) + "/" + r.target };
     });
   }
-  function levelDone() { return levelRows().every(function (x) { return x.frac >= 1; }); }
+  // Effort-o-meter: partial credit for everything. 50 pts = $1, 500 pts clears Level 1.
+  var GOAL_PTS = 500, PTS_PER_DOLLAR = 50, REWARD = 10;
+  function effort() {
+    var t = totals();
+    return Math.floor((t.pushups || 0) + (t.vups || 0) + (t.stretch || 0) * 5 + (t.walk || 0) / 2 +
+      (t.checkin || 0) * 10 + (t.lunch || 0) * 20 + (t.eye || 0) * 50 + (t.weekend || 0) * 50);
+  }
+  function dollars() { return Math.min(REWARD, Math.floor(effort() / PTS_PER_DOLLAR)); }
+  function levelDone() { return effort() >= GOAL_PTS; }
   function streak() {
     var d = new Date(), s = 0;
     while (checkedIn(keyOf(d))) { s++; d = addDays(d, -1); }
@@ -402,23 +455,27 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function fmt(s) { return Math.floor(s / 60) + ":" + pad(s % 60); }
 
   function renderHeader() {
-    var rows = levelRows(), sum = 0, left = 0, html = "";
+    var rows = levelRows(), html = "";
     rows.forEach(function (x) {
-      sum += x.frac; if (x.frac < 1) left++;
       html += '<div class="row' + (x.frac >= 1 ? " full" : "") + '">' +
         '<span class="rl">' + x.r.label + (x.r.note ? "<small>" + x.r.note + "</small>" : "") + "</span>" +
         '<span class="bar"><i style="width:' + (x.frac * 100) + '%"></i></span>' +
         '<span class="rv">' + x.text + "</span></div>";
     });
     document.getElementById("rows").innerHTML = html;
-    var pct = Math.round(sum / rows.length * 100);
-    document.getElementById("lvlpct").textContent = pct + "%";
-    document.getElementById("xpbar").style.width = pct + "%";
-    document.getElementById("board-card").className = "board" + (left ? "" : " cleared");
-    document.getElementById("board-left").textContent = left ? left + (left === 1 ? " bar" : " bars") + " to fill" : "Cleared";
-    document.getElementById("board-intro").textContent = left ?
-      "Fill every bar to clear Level 1 and earn $10. Your daily check-offs and weekly missions add up here automatically." :
-      "Level 1 cleared. You earned $10. Go collect it.";
+    var pts = effort(), cash = dollars(), f = Math.min(1, pts / GOAL_PTS), done = pts >= GOAL_PTS;
+    document.getElementById("lvlpct").textContent = "$" + cash;
+    document.getElementById("xpbar").style.width = (cash / REWARD * 100) + "%";
+    document.getElementById("meter-cash").textContent = "$" + cash;
+    document.getElementById("meter-pts").textContent = Math.min(pts, GOAL_PTS) + " / " + GOAL_PTS + " effort points" +
+      (done ? "" : " · " + (PTS_PER_DOLLAR - pts % PTS_PER_DOLLAR) + " to the next $1");
+    document.getElementById("m-fill").style.strokeDasharray = (f * Math.PI * 100) + " 400";
+    document.getElementById("m-needle").style.transform = "rotate(" + (f * 180) + "deg)";
+    document.getElementById("board-card").className = "board" + (done ? " cleared" : "");
+    document.getElementById("board-left").textContent = done ? "Cleared" : (GOAL_PTS - pts) + " pts to go";
+    document.getElementById("board-intro").textContent = done ?
+      "Level 1 cleared. You earned the full $10. Go collect it." :
+      "Everything counts. Every 50 effort points earns $1, and 500 points clears Level 1 for the full $10. The bars below are the plan, but any mix gets you there.";
     document.getElementById("streak").textContent = streak();
     var w = weekData(keyOf(monday(new Date())));
     var mdone = WEEKLY.filter(function (m) { return (w[m.id] || 0) >= m.target; }).length;
@@ -504,11 +561,11 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   function toggleGoal(id, force) {
     var d = state.days[selected] || (state.days[selected] = {});
-    var before = dayDone(selected), wasCleared = levelDone();
+    var before = dayDone(selected), wasCash = dollars();
     var g = goalOf(id), a = amt(selected, id);
     d[id] = force === undefined ? (a >= g.n ? 0 : g.n) : Math.max(0, Math.min(g.n * 10, a + force));
     save(); renderAll();
-    if ((before < DAILY.length && dayDone(selected) === DAILY.length) || (!wasCleared && levelDone())) burst();
+    if ((before < DAILY.length && dayDone(selected) === DAILY.length) || dollars() > wasCash) burst();
   }
 
   function beep() {
@@ -543,10 +600,10 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (t.dataset.m) {
       var w = weekData(keyOf(monday(new Date())));
       var m = WEEKLY.filter(function (x) { return x.id === t.dataset.m; })[0];
-      var before = w[m.id] || 0, wasCleared = levelDone();
+      var before = w[m.id] || 0, wasCash = dollars();
       w[m.id] = Math.max(0, Math.min(9, before + +t.dataset.d));
       save(); renderAll();
-      if ((before < m.target && w[m.id] >= m.target) || (!wasCleared && levelDone())) burst();
+      if ((before < m.target && w[m.id] >= m.target) || dollars() > wasCash) burst();
       return;
     }
     if (t.id === "timer-go") {
@@ -589,6 +646,19 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     var k = keyOf(new Date());
     if (k !== todayKey) { if (selected === todayKey) selected = k; todayKey = k; checkIn(); renderAll(); }
   }, 60000);
+
+  // Meter ticks: one per $1, labels at $0, $5, $10
+  (function () {
+    var g = "", NS = 120;
+    for (var i = 0; i <= REWARD; i++) {
+      var a = Math.PI - i / REWARD * Math.PI, big = i % 5 === 0;
+      var r1 = big ? 78 : 84, r2 = 92, c = Math.cos(a), s2 = Math.sin(a);
+      g += '<line class="m-tick' + (big ? " big" : "") + '" x1="' + (NS + c * r1) + '" y1="' + (NS - s2 * r1) +
+        '" x2="' + (NS + c * r2) + '" y2="' + (NS - s2 * r2) + '"/>';
+      if (big) g += '<text class="m-lab" x="' + (NS + c * 64) + '" y="' + (NS - s2 * 64 + 4) + '">$' + i + "</text>";
+    }
+    document.getElementById("m-ticks").innerHTML = g;
+  })();
 
   checkIn();
   renderAll();
