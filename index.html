@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crew's Goals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one scoreboard-style column. Player header, then a week strip, today's four reps, and this week's three missions. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --ink: #111a2e;
+  --muted: #56627c;
+  --line: #d5dbe7;
+  --accent: #2e55e6;
+  --accent-soft: #e2e8ff;
+  --on-accent: #ffffff;
+  --gold: #c98f00;
+  --gold-soft: #fff3cf;
+  --done: #10935f;
+  --done-soft: #dcf3e8;
+  --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1020; --surface: #131b2e; --ink: #e8edfa; --muted: #95a1bd; --line: #26314b;
+    --accent: #7090ff; --accent-soft: #1b2650; --on-accent: #0a1020;
+    --gold: #ffc940; --gold-soft: #3a2e0c; --done: #3ad69a; --done-soft: #10301f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1020; --surface: #131b2e; --ink: #e8edfa; --muted: #95a1bd; --line: #26314b;
+  --accent: #7090ff; --accent-soft: #1b2650; --on-accent: #0a1020;
+  --gold: #ffc940; --gold-soft: #3a2e0c; --done: #3ad69a; --done-soft: #10301f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 36px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; text-transform: uppercase; letter-spacing: 0.01em; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+
+/* Header */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 16px 24px; align-items: end; }
+.hero h1 { font-size: clamp(56px, 15vw, 104px); font-weight: 900; line-height: 0.85; }
+.hero h1 span { color: var(--accent); }
+.hero p { margin: 10px 0 0; color: var(--muted); max-width: 40ch; }
+.jersey {
+  width: 112px; aspect-ratio: 1; max-width: 100%;
+  border-radius: 20px; background: var(--accent); color: var(--on-accent);
+  display: grid; place-items: center; align-content: center; text-align: center;
+}
+.jersey .num { font-size: 64px; font-weight: 900; line-height: 0.9; }
+.jersey small { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+
+.stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat { border-top: 3px solid var(--ink); padding-top: 8px; min-width: 0; }
+.stat .num { font-size: 36px; font-weight: 800; line-height: 1.1; display: block; }
+.stat .sub { font-size: 13px; color: var(--muted); }
+.xpbar { height: 6px; background: var(--line); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+.xpbar i { display: block; height: 100%; background: var(--gold); width: 0; transition: width .5s ease; }
+
+/* Section heads */
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.sec-head h2 { font-size: 34px; font-weight: 800; line-height: 1; }
+.sec-head .label { text-align: right; }
+
+/* Week strip */
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.day {
+  border: 2px solid transparent; background: var(--surface); border-radius: 12px;
+  padding: 8px 4px 10px; display: grid; justify-items: center; gap: 2px; min-width: 0;
+}
+.day[disabled] { opacity: 0.45; cursor: default; }
+.day .dn { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
+.day .dd { font-family: var(--font-display); font-size: 24px; font-weight: 800; line-height: 1.1; }
+.day .bars { display: flex; gap: 2px; margin-top: 4px; }
+.day .bars b { width: 6px; height: 6px; border-radius: 2px; background: var(--line); }
+.day .bars b.on { background: var(--done); }
+.day.full { background: var(--done-soft); }
+.day[aria-current="date"] .dn { color: var(--accent); }
+.day.sel { border-color: var(--ink); }
+
+/* Daily list */
+.list { display: grid; gap: 10px; }
+.goal {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: var(--surface); border-radius: 16px; padding: 14px 16px;
+  border: 2px solid var(--line); transition: border-color .2s, background .2s;
+}
+.goal.is-done { border-color: var(--done); background: var(--done-soft); }
+.check {
+  width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--line);
+  background: transparent; display: grid; place-items: center; padding: 0;
+}
+.check svg { width: 24px; height: 24px; stroke: var(--surface); stroke-width: 3.5; fill: none; opacity: 0; transform: scale(.4); transition: transform .2s, opacity .2s; }
+.is-done .check { background: var(--done); border-color: var(--done); }
+.is-done .check svg { opacity: 1; transform: scale(1); stroke: var(--surface); }
+.goal-body { min-width: 0; }
+.goal-body h3 { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.goal-body p { margin: 3px 0 0; font-size: 14px; color: var(--muted); }
+.target { text-align: right; }
+.target .num { font-size: 34px; font-weight: 900; line-height: 1; display: block; }
+.target .label { font-size: 11px; }
+.timer-row { grid-column: 2 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn {
+  border: 2px solid var(--ink); background: transparent; border-radius: 999px;
+  padding: 6px 14px; font-weight: 700; font-size: 14px;
+}
+.btn.primary { background: var(--ink); color: var(--bg); }
+.clock { font-size: 28px; font-weight: 800; }
+
+.banner {
+  margin-top: 12px; border-radius: 14px; padding: 12px 16px; font-weight: 600;
+  background: var(--accent-soft); color: var(--ink);
+}
+.banner.win { background: var(--done-soft); }
+
+/* Weekly missions */
+.mission {
+  background: var(--surface); border-radius: 16px; padding: 16px; border: 2px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center;
+}
+.mission.is-done { border-color: var(--gold); background: var(--gold-soft); }
+.mission h3 { font-size: 26px; font-weight: 800; line-height: 1.05; }
+.mission .detail { font-size: 14px; color: var(--muted); font-weight: 600; }
+.mission .tip { grid-column: 1 / -1; margin: 0; font-size: 15px; max-width: 62ch; }
+.mission .tip q { font-weight: 700; }
+.counter { display: flex; align-items: center; gap: 8px; }
+.counter .num { font-size: 36px; font-weight: 900; min-width: 2.6ch; text-align: center; line-height: 1; }
+.counter .of { color: var(--muted); font-size: 20px; }
+.step {
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink);
+  background: transparent; font-size: 22px; font-weight: 700; line-height: 1; padding: 0;
+}
+.step.plus { background: var(--ink); color: var(--bg); }
+.pips { grid-column: 1 / -1; display: flex; gap: 6px; }
+.pips b { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.pips b.on { background: var(--gold); }
+
+.note { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+#confetti { position: fixed; inset: 0; pointer-events: none; width: 100%; height: 100%; }
+
+@media (max-width: 480px) {
+  .jersey { width: 88px; border-radius: 16px; }
+  .jersey .num { font-size: 48px; }
+  .stat .num { font-size: 28px; }
+  .goal { grid-template-columns: auto 1fr; }
+  .target { grid-column: 2; text-align: left; display: flex; gap: 6px; align-items: baseline; }
+  .target .num { font-size: 22px; }
+  .day .dd { font-size: 20px; }
+  .mission { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="label" id="eyebrow">Crew · Season 1</div>
+      <h1>Level<br><span>up.</span></h1>
+      <p>Four quick reps every day. Three missions every week. Small stuff, done a lot, adds up.</p>
+    </div>
+    <div class="jersey" aria-label="Current level">
+      <small>Level</small>
+      <span class="num" id="lvl">1</span>
+      <small id="rank">Rookie</small>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="label">Total XP</span>
+        <span class="num" id="xp">0</span>
+        <div class="xpbar"><i id="xpbar"></i></div>
+        <span class="sub" id="xpnext">150 to next level</span>
+      </div>
+      <div class="stat">
+        <span class="label">Streak</span>
+        <span class="num" id="streak">0</span>
+        <span class="sub">full days in a row</span>
+      </div>
+      <div class="stat">
+        <span class="label">Missions</span>
+        <span class="num" id="mcount">0/3</span>
+        <span class="sub">done this week</span>
+      </div>
+    </div>
+  </header>
+
+  <section aria-labelledby="week-h">
+    <div class="sec-head">
+      <h2 id="week-h">This week</h2>
+      <span class="label">Tap a day to check it off</span>
+    </div>
+    <div class="week" id="week"></div>
+  </section>
+
+  <section aria-labelledby="daily-h">
+    <div class="sec-head">
+      <h2 id="daily-h">Today</h2>
+      <span class="label" id="daily-count">0 of 4 done</span>
+    </div>
+    <div class="list" id="daily"></div>
+    <div class="banner" id="daily-banner" role="status"></div>
+  </section>
+
+  <section aria-labelledby="weekly-h">
+    <div class="sec-head">
+      <h2 id="weekly-h">Weekly missions</h2>
+      <span class="label">Resets Monday</span>
+    </div>
+    <div class="list" id="weekly"></div>
+  </section>
+
+  <p class="note">Every invite counts, even if they say no. Asking is the hard part, and you did it. Progress is saved on this device.</p>
+</div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+(function () {
+  var DAILY = [
+    { id: "pushups", name: "Push-ups", n: 20, unit: "reps",
+      tip: "Body straight from head to heels. Two sets of 10 is fine." },
+    { id: "vups", name: "V-ups", n: 20, unit: "reps",
+      tip: "Lie flat, lift arms and legs together, reach for your toes. Slow beats fast." },
+    { id: "stretch", name: "Doorway stretch", n: 5, unit: "min", timer: 300,
+      tip: "Forearms on the door frame, elbows at shoulder height. Lean through until you feel it across your chest." },
+    { id: "walk", name: "Posture walk", n: 20, unit: "steps",
+      tip: "Shoulders back and down, chin level, eyes forward. Walk like you belong there, because you do." }
+  ];
+  var WEEKLY = [
+    { id: "eye", name: "Eye contact + smile", detail: "With a girl · 1 second", target: 1,
+      tip: "One second of eye contact and a smile. You don't have to say anything. Passing in the hall or sitting down in class both work." },
+    { id: "weekend", name: "Invite a buddy over", detail: "This weekend", target: 1,
+      tip: "<q>Want to come over Saturday? We could play ___.</q> If they can't make it, ask someone else or try again next week." },
+    { id: "lunch", name: "Invite a buddy to lunch", detail: "3 times this week", target: 3,
+      tip: "<q>Hey, want to sit together at lunch?</q> Same buddy or different ones, every ask counts." }
+  ];
+  var RANKS = ["Rookie", "Prospect", "Starter", "Varsity", "Captain", "All-Star", "Legend"];
+  var PER_LEVEL = 150;
+  var KEY = "crew-goals-v1";
+
+  var state = { days: {}, weeks: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved && saved.days && saved.weeks) state = saved;
+  } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function keyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function fromKey(k) { var p = k.split("-"); return new Date(+p[0], p[1] - 1, +p[2]); }
+  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function monday(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var wd = (x.getDay() + 6) % 7; return addDays(x, -wd); }
+
+  var todayKey = keyOf(new Date());
+  var selected = todayKey;
+
+  function dayDone(k) { var d = state.days[k] || {}; return DAILY.filter(function (g) { return d[g.id]; }).length; }
+  function weekData(k) { return state.weeks[k] || (state.weeks[k] = {}); }
+
+  function totalXP() {
+    var xp = 0;
+    Object.keys(state.days).forEach(function (k) {
+      var c = dayDone(k); xp += c * 10; if (c === DAILY.length) xp += 10;
+    });
+    Object.keys(state.weeks).forEach(function (k) {
+      var w = state.weeks[k];
+      WEEKLY.forEach(function (m) {
+        var v = w[m.id] || 0; xp += Math.min(v, m.target) * 25 + Math.max(0, v - m.target) * 5;
+      });
+    });
+    return xp;
+  }
+  function streak() {
+    var d = new Date(), s = 0;
+    if (dayDone(keyOf(d)) < DAILY.length) d = addDays(d, -1);
+    while (dayDone(keyOf(d)) === DAILY.length) { s++; d = addDays(d, -1); }
+    return s;
+  }
+
+  var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var timer = { left: 300, running: false, id: null };
+
+  function fmt(s) { return Math.floor(s / 60) + ":" + pad(s % 60); }
+
+  function renderHeader() {
+    var xp = totalXP(), lvl = Math.floor(xp / PER_LEVEL) + 1, into = xp % PER_LEVEL;
+    document.getElementById("lvl").textContent = lvl;
+    document.getElementById("rank").textContent = RANKS[Math.min(lvl - 1, RANKS.length - 1)];
+    document.getElementById("xp").textContent = xp;
+    document.getElementById("xpbar").style.width = (into / PER_LEVEL * 100) + "%";
+    document.getElementById("xpnext").textContent = (PER_LEVEL - into) + " to level " + (lvl + 1);
+    document.getElementById("streak").textContent = streak();
+    var w = weekData(keyOf(monday(new Date())));
+    var mdone = WEEKLY.filter(function (m) { return (w[m.id] || 0) >= m.target; }).length;
+    document.getElementById("mcount").textContent = mdone + "/" + WEEKLY.length;
+    var mon = monday(new Date());
+    document.getElementById("eyebrow").textContent = "Crew · Week of " +
+      mon.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  function renderWeek() {
+    var mon = monday(new Date()), html = "";
+    for (var i = 0; i < 7; i++) {
+      var d = addDays(mon, i), k = keyOf(d), c = dayDone(k), future = k > todayKey;
+      var bars = "";
+      for (var j = 0; j < DAILY.length; j++) bars += '<b class="' + (j < c ? "on" : "") + '"></b>';
+      html += '<button class="day' + (c === DAILY.length ? " full" : "") + (k === selected ? " sel" : "") + '"' +
+        (future ? " disabled" : "") + (k === todayKey ? ' aria-current="date"' : "") +
+        ' data-day="' + k + '" aria-label="' + d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + ", " + c + " of 4 done" + '">' +
+        '<span class="dn">' + d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3).toUpperCase() + "</span>" +
+        '<span class="dd">' + d.getDate() + "</span>" +
+        '<span class="bars">' + bars + "</span></button>";
+    }
+    document.getElementById("week").innerHTML = html;
+  }
+
+  function renderDaily() {
+    var d = state.days[selected] || {}, html = "";
+    DAILY.forEach(function (g) {
+      var on = !!d[g.id];
+      html += '<div class="goal' + (on ? " is-done" : "") + '">' +
+        '<button class="check" data-goal="' + g.id + '" aria-pressed="' + on + '" aria-label="' + g.name + " done" + '">' + CHECK + "</button>" +
+        '<div class="goal-body"><h3>' + g.name + "</h3><p>" + g.tip + "</p></div>" +
+        '<div class="target"><span class="num">' + g.n + '</span><span class="label">' + g.unit + "</span></div>";
+      if (g.timer && !on) {
+        html += '<div class="timer-row"><span class="num clock" id="clock">' + fmt(timer.left) + "</span>" +
+          '<button class="btn primary" id="timer-go">' + (timer.running ? "Pause" : (timer.left < g.timer ? "Resume" : "Start timer")) + "</button>" +
+          (timer.left < g.timer ? '<button class="btn" id="timer-reset">Reset</button>' : "") + "</div>";
+      }
+      html += "</div>";
+    });
+    document.getElementById("daily").innerHTML = html;
+
+    var c = dayDone(selected);
+    var isToday = selected === todayKey;
+    document.getElementById("daily-h").textContent = isToday ? "Today" :
+      fromKey(selected).toLocaleDateString(undefined, { weekday: "long" });
+    document.getElementById("daily-count").textContent = c + " of 4 done";
+    var b = document.getElementById("daily-banner");
+    b.className = "banner" + (c === DAILY.length ? " win" : "");
+    b.textContent = c === DAILY.length ? "All four done. That's a full day. +50 XP" :
+      c === 0 ? (isToday ? "Start with whichever one is easiest." : "Forgot to check these off? Tap them now.") :
+      (DAILY.length - c) + " to go. You're already moving.";
+  }
+
+  function renderWeekly() {
+    var w = weekData(keyOf(monday(new Date()))), html = "";
+    WEEKLY.forEach(function (m) {
+      var v = w[m.id] || 0, done = v >= m.target, pips = "";
+      for (var i = 0; i < m.target; i++) pips += '<b class="' + (i < v ? "on" : "") + '"></b>';
+      html += '<div class="mission' + (done ? " is-done" : "") + '">' +
+        '<div><h3>' + m.name + '</h3><div class="detail">' + m.detail + "</div></div>" +
+        '<div class="counter">' +
+          '<button class="step" data-m="' + m.id + '" data-d="-1" aria-label="Remove one from ' + m.name + '"' + (v === 0 ? " disabled" : "") + ">−</button>" +
+          '<span class="num" aria-live="polite">' + v + '<span class="of">/' + m.target + "</span></span>" +
+          '<button class="step plus" data-m="' + m.id + '" data-d="1" aria-label="Add one to ' + m.name + '">+</button>' +
+        "</div>" +
+        '<div class="pips">' + pips + "</div>" +
+        '<p class="tip">' + m.tip + "</p></div>";
+    });
+    document.getElementById("weekly").innerHTML = html;
+  }
+
+  function renderAll() { renderHeader(); renderWeek(); renderDaily(); renderWeekly(); }
+
+  function toggleGoal(id, force) {
+    var d = state.days[selected] || (state.days[selected] = {});
+    var before = dayDone(selected);
+    d[id] = force === undefined ? !d[id] : force;
+    save(); renderAll();
+    if (before < DAILY.length && dayDone(selected) === DAILY.length) burst();
+  }
+
+  function beep() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.25, 0.5].forEach(function (t) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.2, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.2);
+      });
+    } catch (e) {}
+  }
+
+  function tick() {
+    timer.left--;
+    var c = document.getElementById("clock");
+    if (c) c.textContent = fmt(timer.left);
+    if (timer.left <= 0) {
+      clearInterval(timer.id); timer.running = false; timer.left = 300;
+      beep(); toggleGoal("stretch", true);
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button");
+    if (!t || t.disabled) return;
+    if (t.dataset.goal) return toggleGoal(t.dataset.goal);
+    if (t.dataset.day) { selected = t.dataset.day; renderWeek(); renderDaily(); return; }
+    if (t.dataset.m) {
+      var w = weekData(keyOf(monday(new Date())));
+      var m = WEEKLY.filter(function (x) { return x.id === t.dataset.m; })[0];
+      var before = w[m.id] || 0;
+      w[m.id] = Math.max(0, Math.min(9, before + +t.dataset.d));
+      save(); renderAll();
+      if (before < m.target && w[m.id] >= m.target) burst();
+      return;
+    }
+    if (t.id === "timer-go") {
+      if (timer.running) { clearInterval(timer.id); timer.running = false; }
+      else { timer.running = true; timer.id = setInterval(tick, 1000); }
+      renderDaily(); return;
+    }
+    if (t.id === "timer-reset") {
+      clearInterval(timer.id); timer.running = false; timer.left = 300; renderDaily();
+    }
+  });
+
+  // Confetti
+  var cv = document.getElementById("confetti"), cx = cv.getContext("2d"), parts = [], raf = null;
+  function burst() {
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var cs = getComputedStyle(document.documentElement);
+    var cols = ["--accent", "--gold", "--done"].map(function (v) { return cs.getPropertyValue(v).trim(); });
+    cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+    for (var i = 0; i < 140; i++) {
+      parts.push({ x: cv.width / 2, y: cv.height * 0.4, vx: (Math.random() - 0.5) * 22 * devicePixelRatio,
+        vy: (-Math.random() * 18 - 6) * devicePixelRatio, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+        s: (6 + Math.random() * 6) * devicePixelRatio, c: cols[i % 3], life: 0 });
+    }
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+  function frame() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(function (p) { return p.life < 140 && p.y < cv.height + 40; });
+    parts.forEach(function (p) {
+      p.life++; p.vy += 0.6 * devicePixelRatio; p.vx *= 0.98; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+      cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore();
+    });
+    raf = parts.length ? requestAnimationFrame(frame) : (cx.clearRect(0, 0, cv.width, cv.height), null);
+  }
+
+  // Roll over to a new day if the page stays open past midnight
+  setInterval(function () {
+    var k = keyOf(new Date());
+    if (k !== todayKey) { if (selected === todayKey) selected = k; todayKey = k; renderAll(); }
+  }, 60000);
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
