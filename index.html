@@ -141,6 +141,12 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 }
 .btn.primary { background: var(--ink); color: var(--bg); }
 .clock { font-size: 28px; font-weight: 800; }
+.more { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.timer-row .clock + .btn + .more, .timer-row .btn + .more { margin-left: auto; }
+.locked { border: 2px dashed var(--line); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.locked .lk { width: 56px; height: 56px; border-radius: 14px; background: var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 900; font-size: 32px; color: var(--muted); }
+.locked h2 { font-size: 26px; font-weight: 800; line-height: 1.05; }
+.locked p { margin: 4px 0 0; color: var(--muted); }
 
 .banner {
   margin-top: 12px; border-radius: 14px; padding: 12px 16px; font-weight: 600;
@@ -235,6 +241,14 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     <div class="rows" id="rows"></div>
   </section>
 
+  <section class="locked" aria-labelledby="l2-h">
+    <div class="lk" aria-hidden="true">2</div>
+    <div>
+      <h2 id="l2-h">Level 2 · Locked</h2>
+      <p>New missions and obstacles. Unlocks when Level 1 is cleared.</p>
+    </div>
+  </section>
+
   <section aria-labelledby="week-h">
     <div class="sec-head">
       <h2 id="week-h">This week</h2>
@@ -311,13 +325,15 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   var todayKey = keyOf(new Date());
   var selected = todayKey;
 
-  function dayDone(k) { var d = state.days[k] || {}; return DAILY.filter(function (g) { return d[g.id]; }).length; }
+  // A day's goal holds how many sets were done (older saves used true for one set)
+  function sets(k, id) { var v = (state.days[k] || {})[id]; return v === true ? 1 : (+v || 0); }
+  function dayDone(k) { return DAILY.filter(function (g) { return sets(k, g.id) > 0; }).length; }
   function weekData(k) { return state.weeks[k] || (state.weeks[k] = {}); }
 
   function totals() {
     var t = {};
     Object.keys(state.days).forEach(function (k) {
-      DAILY.forEach(function (g) { if (state.days[k][g.id]) t[g.id] = (t[g.id] || 0) + 1; });
+      DAILY.forEach(function (g) { t[g.id] = (t[g.id] || 0) + sets(k, g.id); });
     });
     Object.keys(state.weeks).forEach(function (k) {
       WEEKLY.forEach(function (m) { t[m.id] = (t[m.id] || 0) + (state.weeks[k][m.id] || 0); });
@@ -394,18 +410,26 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   }
 
   function renderDaily() {
-    var d = state.days[selected] || {}, html = "";
+    var html = "";
     DAILY.forEach(function (g) {
-      var on = !!d[g.id];
+      var s = sets(selected, g.id), on = s > 0;
       html += '<div class="goal' + (on ? " is-done" : "") + '">' +
         '<button class="check" data-goal="' + g.id + '" aria-pressed="' + on + '" aria-label="' + g.name + " done" + '">' + CHECK + "</button>" +
         '<div class="goal-body"><h3>' + g.name + "</h3><p>" + g.tip + "</p></div>" +
-        '<div class="target"><span class="num">' + g.n + '</span><span class="label">' + g.unit + "</span></div>";
-      if (g.timer && !on) {
-        html += '<div class="timer-row"><span class="num clock" id="clock">' + fmt(timer.left) + "</span>" +
-          '<button class="btn primary" id="timer-go">' + (timer.running ? "Pause" : (timer.left < g.timer ? "Resume" : "Start timer")) + "</button>" +
-          (timer.left < g.timer ? '<button class="btn" id="timer-reset">Reset</button>' : "") + "</div>";
+        '<div class="target"><span class="num">' + (on ? s * g.n : g.n) + '</span><span class="label">' + g.unit + (on ? " today" : "") + "</span></div>";
+      var extra = "";
+      if (g.timer) {
+        extra += '<span class="num clock" id="clock">' + fmt(timer.left) + "</span>" +
+          '<button class="btn primary" id="timer-go">' + (timer.running ? "Pause" : timer.left < g.timer ? "Resume" : on ? "Another 5:00" : "Start timer") + "</button>" +
+          (timer.left < g.timer ? '<button class="btn" id="timer-reset">Reset</button>' : "");
       }
+      if (on) {
+        extra += '<span class="more">' +
+          '<button class="btn" data-more="' + g.id + '" data-d="1">+' + g.n + " more " + g.unit + "</button>" +
+          (s > 1 ? '<button class="btn" data-more="' + g.id + '" data-d="-1" aria-label="Remove ' + g.n + " " + g.unit + '">−' + g.n + "</button>" : "") +
+          "</span>";
+      }
+      if (extra) html += '<div class="timer-row">' + extra + "</div>";
       html += "</div>";
     });
     document.getElementById("daily").innerHTML = html;
@@ -417,7 +441,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     document.getElementById("daily-count").textContent = c + " of 4 done";
     var b = document.getElementById("daily-banner");
     b.className = "banner" + (c === DAILY.length ? " win" : "");
-    b.textContent = c === DAILY.length ? "All four done. That's a full day." :
+    b.textContent = c === DAILY.length ? "All four done. That's a full day. Extra sets still count toward Level 1." :
       c === 0 ? (isToday ? "Start with whichever one is easiest." : "Forgot to check these off? Tap them now.") :
       (DAILY.length - c) + " to go. You're already moving.";
   }
@@ -445,7 +469,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function toggleGoal(id, force) {
     var d = state.days[selected] || (state.days[selected] = {});
     var before = dayDone(selected), wasCleared = levelDone();
-    d[id] = force === undefined ? !d[id] : force;
+    d[id] = force === undefined ? (sets(selected, id) > 0 ? 0 : 1) : Math.max(0, Math.min(10, sets(selected, id) + force));
     save(); renderAll();
     if ((before < DAILY.length && dayDone(selected) === DAILY.length) || (!wasCleared && levelDone())) burst();
   }
@@ -469,7 +493,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (c) c.textContent = fmt(timer.left);
     if (timer.left <= 0) {
       clearInterval(timer.id); timer.running = false; timer.left = 300;
-      beep(); toggleGoal("stretch", true);
+      beep(); toggleGoal("stretch", 1);
     }
   }
 
@@ -477,6 +501,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     var t = e.target.closest("button");
     if (!t || t.disabled) return;
     if (t.dataset.goal) return toggleGoal(t.dataset.goal);
+    if (t.dataset.more) return toggleGoal(t.dataset.more, +t.dataset.d);
     if (t.dataset.day) { selected = t.dataset.day; renderWeek(); renderDaily(); return; }
     if (t.dataset.m) {
       var w = weekData(keyOf(monday(new Date())));
