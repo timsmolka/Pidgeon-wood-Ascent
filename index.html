@@ -143,6 +143,10 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .clock { font-size: 28px; font-weight: 800; }
 .more { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .timer-row .clock + .btn + .more, .timer-row .btn + .more { margin-left: auto; }
+.more .btn { min-width: 3.2rem; padding: 6px 10px; }
+.more .btn.add { background: var(--ink); color: var(--bg); }
+.more .btn[disabled] { opacity: .35; cursor: default; }
+.target .of { font-size: .55em; color: var(--muted); }
 .locked { border: 2px dashed var(--line); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
 .locked .lk { width: 56px; height: 56px; border-radius: 14px; background: var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 900; font-size: 32px; color: var(--muted); }
 .locked h2 { font-size: 26px; font-weight: 800; line-height: 1.05; }
@@ -281,13 +285,13 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 <script>
 (function () {
   var DAILY = [
-    { id: "pushups", name: "Push-ups", n: 20, unit: "reps",
+    { id: "pushups", name: "Push-ups", n: 20, unit: "reps", adds: [1, 5, 20],
       tip: "Body straight from head to heels. Two sets of 10 is fine." },
-    { id: "vups", name: "V-ups", n: 20, unit: "reps",
+    { id: "vups", name: "V-ups", n: 20, unit: "reps", adds: [1, 5, 20],
       tip: "Lie flat, lift arms and legs together, reach for your toes. Slow beats fast." },
-    { id: "stretch", name: "Doorway stretch", n: 5, unit: "min", timer: 300,
+    { id: "stretch", name: "Doorway stretch", n: 5, unit: "min", timer: 300, adds: [1, 5],
       tip: "Forearms on the door frame, elbows at shoulder height. Lean through until you feel it across your chest." },
-    { id: "walk", name: "Posture walk", n: 20, unit: "steps",
+    { id: "walk", name: "Posture walk", n: 20, unit: "steps", adds: [1, 5, 20],
       tip: "Shoulders back and down, chin level, eyes forward. Walk like you belong there, because you do." }
   ];
   var WEEKLY = [
@@ -307,12 +311,25 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     { id: "eye", label: "Eye contact + smile", target: 1, mission: true },
     { id: "invite", label: "Invite", note: "1 weekend or 3 lunches", invite: true }
   ];
-  var KEY = "crew-goals-v1";
+  var KEY = "crew-goals-v2";
 
   var state = { days: {}, weeks: {} };
   try {
     var saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (saved && saved.days && saved.weeks) state = saved;
+    else {
+      // v1 saved whole sets (true or a count); v2 saves reps / minutes / steps
+      var old = JSON.parse(localStorage.getItem("crew-goals-v1") || "null");
+      if (old && old.days && old.weeks) {
+        Object.keys(old.days).forEach(function (k) {
+          DAILY.forEach(function (g) {
+            var v = old.days[k][g.id];
+            if (v) old.days[k][g.id] = (v === true ? 1 : +v || 0) * g.n;
+          });
+        });
+        state = old;
+      }
+    }
   } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
@@ -325,15 +342,16 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   var todayKey = keyOf(new Date());
   var selected = todayKey;
 
-  // A day's goal holds how many sets were done (older saves used true for one set)
-  function sets(k, id) { var v = (state.days[k] || {})[id]; return v === true ? 1 : (+v || 0); }
-  function dayDone(k) { return DAILY.filter(function (g) { return sets(k, g.id) > 0; }).length; }
+  // A day's goal holds the amount done: reps, minutes or steps
+  function amt(k, id) { return +((state.days[k] || {})[id]) || 0; }
+  function goalOf(id) { return DAILY.filter(function (g) { return g.id === id; })[0]; }
+  function dayDone(k) { return DAILY.filter(function (g) { return amt(k, g.id) >= g.n; }).length; }
   function weekData(k) { return state.weeks[k] || (state.weeks[k] = {}); }
 
   function totals() {
     var t = {};
     Object.keys(state.days).forEach(function (k) {
-      DAILY.forEach(function (g) { t[g.id] = (t[g.id] || 0) + sets(k, g.id); });
+      DAILY.forEach(function (g) { t[g.id] = (t[g.id] || 0) + amt(k, g.id); });
     });
     Object.keys(state.weeks).forEach(function (k) {
       WEEKLY.forEach(function (m) { t[m.id] = (t[m.id] || 0) + (state.weeks[k][m.id] || 0); });
@@ -349,7 +367,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
         return { r: r, frac: Math.min(1, Math.max(we / 1, lu / 3)),
           text: we >= 1 ? "Weekend ✓" : lu >= 3 ? "Lunch ✓" : we + "/1 · " + lu + "/3" };
       }
-      var v = r.mission ? (t[r.id] || 0) : (t[r.id] || 0) * r.per;
+      var v = t[r.id] || 0;
       return { r: r, frac: Math.min(1, v / r.target), text: Math.min(v, r.target) + "/" + r.target };
     });
   }
@@ -412,23 +430,23 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function renderDaily() {
     var html = "";
     DAILY.forEach(function (g) {
-      var s = sets(selected, g.id), on = s > 0;
+      var a = amt(selected, g.id), on = a >= g.n;
       html += '<div class="goal' + (on ? " is-done" : "") + '">' +
         '<button class="check" data-goal="' + g.id + '" aria-pressed="' + on + '" aria-label="' + g.name + " done" + '">' + CHECK + "</button>" +
         '<div class="goal-body"><h3>' + g.name + "</h3><p>" + g.tip + "</p></div>" +
-        '<div class="target"><span class="num">' + (on ? s * g.n : g.n) + '</span><span class="label">' + g.unit + (on ? " today" : "") + "</span></div>";
+        '<div class="target"><span class="num">' + (a ? a : g.n) + (a && !on ? '<span class="of">/' + g.n + "</span>" : "") +
+          '</span><span class="label">' + g.unit + (a ? " today" : "") + "</span></div>";
       var extra = "";
       if (g.timer) {
         extra += '<span class="num clock" id="clock">' + fmt(timer.left) + "</span>" +
           '<button class="btn primary" id="timer-go">' + (timer.running ? "Pause" : timer.left < g.timer ? "Resume" : on ? "Another 5:00" : "Start timer") + "</button>" +
           (timer.left < g.timer ? '<button class="btn" id="timer-reset">Reset</button>' : "");
       }
-      if (on) {
-        extra += '<span class="more">' +
-          '<button class="btn" data-more="' + g.id + '" data-d="1">+' + g.n + " more " + g.unit + "</button>" +
-          (s > 1 ? '<button class="btn" data-more="' + g.id + '" data-d="-1" aria-label="Remove ' + g.n + " " + g.unit + '">−' + g.n + "</button>" : "") +
-          "</span>";
-      }
+      extra += '<span class="more">' +
+        '<button class="btn" data-more="' + g.id + '" data-d="-1" aria-label="Remove 1 ' + g.unit + '"' + (a ? "" : " disabled") + ">−1</button>" +
+        g.adds.map(function (n) {
+          return '<button class="btn add" data-more="' + g.id + '" data-d="' + n + '" aria-label="Add ' + n + " " + g.unit + '">+' + n + "</button>";
+        }).join("") + "</span>";
       if (extra) html += '<div class="timer-row">' + extra + "</div>";
       html += "</div>";
     });
@@ -441,7 +459,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     document.getElementById("daily-count").textContent = c + " of 4 done";
     var b = document.getElementById("daily-banner");
     b.className = "banner" + (c === DAILY.length ? " win" : "");
-    b.textContent = c === DAILY.length ? "All four done. That's a full day. Extra sets still count toward Level 1." :
+    b.textContent = c === DAILY.length ? "All four done. That's a full day. Anything extra still counts toward Level 1." :
       c === 0 ? (isToday ? "Start with whichever one is easiest." : "Forgot to check these off? Tap them now.") :
       (DAILY.length - c) + " to go. You're already moving.";
   }
@@ -469,7 +487,8 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function toggleGoal(id, force) {
     var d = state.days[selected] || (state.days[selected] = {});
     var before = dayDone(selected), wasCleared = levelDone();
-    d[id] = force === undefined ? (sets(selected, id) > 0 ? 0 : 1) : Math.max(0, Math.min(10, sets(selected, id) + force));
+    var g = goalOf(id), a = amt(selected, id);
+    d[id] = force === undefined ? (a >= g.n ? 0 : g.n) : Math.max(0, Math.min(g.n * 10, a + force));
     save(); renderAll();
     if ((before < DAILY.length && dayDone(selected) === DAILY.length) || (!wasCleared && levelDone())) burst();
   }
@@ -493,7 +512,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (c) c.textContent = fmt(timer.left);
     if (timer.left <= 0) {
       clearInterval(timer.id); timer.running = false; timer.left = 300;
-      beep(); toggleGoal("stretch", 1);
+      beep(); toggleGoal("stretch", 5);
     }
   }
 
