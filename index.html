@@ -110,6 +110,12 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .day .bars b { width: 6px; height: 6px; border-radius: 2px; background: var(--line); }
 .day .bars b.on { background: var(--done); }
 .day.full { background: var(--done-soft); }
+.day .bars b.ci { border-radius: 50%; margin-right: 3px; }
+.day .bars b.ci.on { background: var(--accent); }
+.checkin { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px;
+  border-radius: 999px; background: var(--accent-soft); font-weight: 700; font-size: 14px; }
+.ci-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
+.ci-dot::after { content: ""; width: 5px; height: 9px; border: solid var(--on-accent); border-width: 0 2.5px 2.5px 0; transform: translate(0, -1px) rotate(45deg); }
 .day[aria-current="date"] .dn { color: var(--accent); }
 .day.sel { border-color: var(--ink); }
 
@@ -209,7 +215,8 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     <div>
       <div class="label" id="eyebrow">Crew · Season 1</div>
       <h1>Level<br><span>up.</span></h1>
-      <p>Four quick reps every day. Three missions every week. Every rep adds up toward Level 1 and a $10 reward.</p>
+      <p>Check in every day. Four quick reps. Three missions a week. It all adds up toward Level 1 and a $10 reward.</p>
+      <div class="checkin" role="status"><span class="ci-dot" aria-hidden="true"></span><span id="checkin-text">Checked in today. That counts.</span></div>
     </div>
     <div class="jersey" aria-label="Current level">
       <small>Level</small>
@@ -226,7 +233,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       <div class="stat">
         <span class="label">Streak</span>
         <span class="num" id="streak">0</span>
-        <span class="sub">full days in a row</span>
+        <span class="sub">days checked in</span>
       </div>
       <div class="stat">
         <span class="label">Missions</span>
@@ -308,12 +315,13 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     { id: "vups", label: "V-ups", target: 100, per: 20, unit: "" },
     { id: "stretch", label: "Doorway stretch", target: 20, per: 5, unit: " min" },
     { id: "walk", label: "Posture walk", target: 100, per: 20, unit: " steps" },
+    { id: "checkin", label: "Check-ins", note: "Open the app any day", target: 7 },
     { id: "eye", label: "Eye contact + smile", target: 1, mission: true },
     { id: "invite", label: "Invite", note: "1 weekend or 3 lunches", invite: true }
   ];
   var KEY = "crew-goals-v2";
 
-  var state = { days: {}, weeks: {} };
+  var state = { days: {}, weeks: {}, checkins: {} };
   try {
     var saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (saved && saved.days && saved.weeks) state = saved;
@@ -340,6 +348,12 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function monday(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var wd = (x.getDay() + 6) % 7; return addDays(x, -wd); }
 
   var todayKey = keyOf(new Date());
+
+  // Opening the app is a check-in, even on a day nothing else gets done
+  function checkIn() { state.checkins = state.checkins || {}; state.checkins[todayKey] = true; save(); }
+  function checkedIn(k) {
+    return !!(state.checkins && state.checkins[k]) || DAILY.some(function (g) { return amt(k, g.id) > 0; });
+  }
   var selected = todayKey;
 
   // A day's goal holds the amount done: reps, minutes or steps
@@ -352,6 +366,10 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     var t = {};
     Object.keys(state.days).forEach(function (k) {
       DAILY.forEach(function (g) { t[g.id] = (t[g.id] || 0) + amt(k, g.id); });
+    });
+    var seen = {};
+    Object.keys(state.checkins || {}).concat(Object.keys(state.days)).forEach(function (k) {
+      if (!seen[k] && checkedIn(k)) { seen[k] = true; t.checkin = (t.checkin || 0) + 1; }
     });
     Object.keys(state.weeks).forEach(function (k) {
       WEEKLY.forEach(function (m) { t[m.id] = (t[m.id] || 0) + (state.weeks[k][m.id] || 0); });
@@ -374,8 +392,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function levelDone() { return levelRows().every(function (x) { return x.frac >= 1; }); }
   function streak() {
     var d = new Date(), s = 0;
-    if (dayDone(keyOf(d)) < DAILY.length) d = addDays(d, -1);
-    while (dayDone(keyOf(d)) === DAILY.length) { s++; d = addDays(d, -1); }
+    while (checkedIn(keyOf(d))) { s++; d = addDays(d, -1); }
     return s;
   }
 
@@ -417,12 +434,13 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       var d = addDays(mon, i), k = keyOf(d), c = dayDone(k), future = k > todayKey;
       var bars = "";
       for (var j = 0; j < DAILY.length; j++) bars += '<b class="' + (j < c ? "on" : "") + '"></b>';
-      html += '<button class="day' + (c === DAILY.length ? " full" : "") + (k === selected ? " sel" : "") + '"' +
+      var ci = checkedIn(k);
+      html += '<button class="day' + (c === DAILY.length ? " full" : "") + (ci ? " in" : "") + (k === selected ? " sel" : "") + '"' +
         (future ? " disabled" : "") + (k === todayKey ? ' aria-current="date"' : "") +
-        ' data-day="' + k + '" aria-label="' + d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + ", " + c + " of 4 done" + '">' +
+        ' data-day="' + k + '" aria-label="' + d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + ", " + (ci ? "checked in, " : "") + c + " of 4 done" + '">' +
         '<span class="dn">' + d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3).toUpperCase() + "</span>" +
         '<span class="dd">' + d.getDate() + "</span>" +
-        '<span class="bars">' + bars + "</span></button>";
+        '<span class="bars"><b class="ci' + (ci ? " on" : "") + '"></b>' + bars + "</span></button>";
     }
     document.getElementById("week").innerHTML = html;
   }
@@ -569,9 +587,10 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   // Roll over to a new day if the page stays open past midnight
   setInterval(function () {
     var k = keyOf(new Date());
-    if (k !== todayKey) { if (selected === todayKey) selected = k; todayKey = k; renderAll(); }
+    if (k !== todayKey) { if (selected === todayKey) selected = k; todayKey = k; checkIn(); renderAll(); }
   }, 60000);
 
+  checkIn();
   renderAll();
 })();
 </script>
