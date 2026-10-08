@@ -15,7 +15,7 @@ Two output wires leave the box through the side wall. An internal zip-tie anchor
 
 The lid slides on and off from the **button end**, like a pencil box:
 
-- Its long edges ride in 45° grooves at the top of the side walls, and its far edge tucks under the end wall by the switch window. That holds the lid down without screws.
+- Its long edges ride in 45° grooves at the top of the side walls, and its far edge tucks under the closed end wall. That holds the lid down without screws.
 - The button end of the base is open. The lid carries that end wall with it, so the button (hanging under the lid) slides straight out of its compartment with the lid. Nothing in the base is in its way.
 - Small bumps on that end wall click into dimples in the side walls when the lid is fully closed, so it doesn't slide open by itself.
 - To open: push on the grip grooves at the far end of the lid with your thumb, or just pull on the button head.
