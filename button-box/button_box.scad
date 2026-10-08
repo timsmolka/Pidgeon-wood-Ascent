@@ -17,6 +17,10 @@
 
 part = "both";            // "base", "lid", "both" (print layout), "assembled" (preview)
 
+// "slide": lid slides on from the button end, no hardware, opens by hand.
+// "screw": flat lid held by 4 x M3 screws into corner posts.
+lid_style = "slide";
+
 // ---------------- PART DIMENSIONS (measure these!) ----------------
 holder_l = 126;           // battery holder length, including cover (mm)
 holder_w = 71;            // battery holder width (mm)
@@ -41,7 +45,7 @@ sw_win_h       = 10;      // window height (inner, mm)
 sw_flare       = 3;       // outward flare so a fingertip can reach the slider
 
 // ---------------- ENCLOSURE SETTINGS ----------------
-wall      = 2.4;          // side wall thickness (6 perimeters @ 0.4 nozzle)
+wall      = lid_style == "slide" ? 3.6 : 2.4;  // wall thickness (slide needs room for the groove)
 floor_t   = 2.0;          // floor thickness
 lid_t     = 3.0;          // lid thickness (keep <= ~6 so the button nut can grab)
 clr       = 0.8;          // clearance around the battery holder
@@ -55,6 +59,12 @@ screw_head_h = 1.6;
 post_r    = 4.6;          // corner screw boss radius
 post_off  = 3.0;          // how far boss centers sit outside the interior corner
 
+// sliding lid
+dt        = 2.0;          // how far the 45-degree lid groove cuts into each wall
+slide_clr = 0.4;          // play between lid and groove (raise if too tight)
+detent    = 0.25;         // how hard the closing "click" bumps press (0 = none)
+
+// screw lid
 lip_h     = 3;            // alignment lip under the lid
 lip_t     = 1.6;
 lip_clr   = 0.3;
@@ -69,7 +79,10 @@ IH = max(holder_h + 2, btn_depth + 2);         // interior height (Z)
 btn_x = IL - comp_l/2 + 1;
 btn_y = IW/2;
 
-posts = [[-post_off, -post_off], [IL + post_off, -post_off],
+slide = lid_style == "slide";
+wall_top = slide ? IH + lid_t : IH;           // top of the base walls
+
+posts = slide ? [] : [[-post_off, -post_off], [IL + post_off, -post_off],
          [-post_off, IW + post_off], [IL + post_off, IW + post_off]];
 
 wire_x0 = btn_x - (wire_count-1)*wire_spacing/2;
@@ -87,10 +100,17 @@ module outline() {
 module base() {
     difference() {
         union() {
-            translate([0, 0, -floor_t]) linear_extrude(IH + floor_t) outline();
+            translate([0, 0, -floor_t]) linear_extrude(wall_top + floor_t) outline();
         }
-        // main cavity
-        cube([IL, IW, IH + 1]);
+        // main cavity (sliding lid: open at the button end, the lid brings that wall)
+        cube([slide ? IL + wall + 1 : IL, IW, wall_top + 1]);
+        if (slide) {
+            slide_slot(0);
+            // dimples the lid's click bumps drop into
+            if (detent > 0)
+                for (y = [0, IW])
+                    translate([IL + wall/2, y, IH/2]) sphere(r = 1.6);
+        }
         // screw pilot holes
         for (p = posts) translate([p[0], p[1], 0]) cylinder(d = screw_pilot, h = IH + 1);
         // wire exit holes (side wall y=0, inside the button compartment)
@@ -111,6 +131,18 @@ module base() {
         translate([stop_x, y, 0]) cube([2, 4, 10]);
     // zip-tie anchor bridge under the exit holes (tie threads through along X)
     anchor();
+}
+
+// 45-degree dovetail the lid rides in. c = clearance (0 for the slot itself).
+// At the lid's underside it reaches dt into each wall; at the top it is
+// lid_t narrower per side, so the walls overhang the lid edges.
+module slide_slot(c) {
+    x1 = IL + wall + (c > 0 ? 0 : 1);
+    hull() {
+        translate([-dt + c, -dt + c, IH]) cube([x1 + dt - c, IW + 2*(dt - c), 0.01]);
+        translate([-dt + lid_t + c, -dt + lid_t + c, IH + lid_t - 0.01])
+            cube([x1 + dt - lid_t - c, IW + 2*(dt - lid_t - c), 0.01]);
+    }
 }
 
 // Switch window: holder's switch end sits against the X = 0 wall,
@@ -139,7 +171,43 @@ module anchor() {
 
 // ---------------- LID ----------------
 // Modelled in assembled orientation (top surface at z = lid_t).
-module lid() {
+module lid() { if (slide) slide_lid(); else screw_lid(); }
+
+// Hold-down rib with a sloped leading end, so it rides up over the
+// holder instead of catching on it while the lid slides in.
+module rib(y, rib_h) {
+    x0 = clr + 10; len = holder_l - 20;
+    hull() {
+        translate([x0 + rib_h, y, -rib_h]) cube([len - rib_h, 2, rib_h]);
+        translate([x0, y, -0.01]) cube([len, 2, 0.01]);
+    }
+}
+
+module slide_lid() {
+    rib_h = IH - holder_h - 0.4;
+    pw = IW - 2*slide_clr;                 // end panel width
+    difference() {
+        union() {
+            // plate (dovetailed sides and far edge)
+            translate([0, 0, -IH]) slide_slot(slide_clr);
+            // end wall carried by the lid; closes the open button end
+            translate([IL, slide_clr, -IH + 0.3]) cube([wall, pw, IH - 0.3]);
+            // click bumps on the end wall's sides
+            if (detent > 0)
+                for (y = [1.2 - detent, IW - 1.2 + detent])  // poke detent mm into the walls
+                    translate([IL + wall/2, y, -IH/2]) sphere(r = 1.2);
+            if (rib_h > 0.5)
+                for (y = [IW/2 - 15, IW/2 + 13]) rib(y, rib_h);
+        }
+        // button hole
+        translate([btn_x, btn_y, -1]) cylinder(d = btn_hole_d, h = lid_t + 2);
+        // thumb grip grooves at the far end: push here to slide the lid open
+        for (i = [0 : 3])
+            translate([6 + i*4, IW/2 - 15, lid_t - 0.8]) cube([2, 30, 1]);
+    }
+}
+
+module screw_lid() {
     rib_h = IH - holder_h - 0.4;   // presses the holder down so it can't rattle
     difference() {
         union() {
@@ -188,12 +256,12 @@ if (part == "base") {
     base();
     color("tomato", 0.6) translate([0, 0, IH]) lid();
     ghost_parts();
-} else {
+} else if (part == "both") {
     translate([0, 0, floor_t]) base();
     // lid flipped (top face down) beside the base
     translate([0, -15, lid_t]) rotate([180, 0, 0]) lid();
 }
 
-echo(str("Outer footprint approx: ", IL + 2*(post_off + post_r), " x ",
-         IW + 2*(post_off + post_r), " mm, base height ", IH + floor_t,
-         " mm, lid ", lid_t, " mm"));
+ext = slide ? wall : post_off + post_r;
+echo(str("Outer footprint approx: ", IL + 2*ext, " x ", IW + 2*ext,
+         " mm, base height ", wall_top + floor_t, " mm"));
