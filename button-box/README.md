@@ -5,7 +5,7 @@ A two-part 3D-printable box (base + sliding lid, no screws) that holds:
 - 1 × **QTEATAK 8 × AA battery holder** (with cover and ON/OFF switch)
 - 1 × **SMLBJUTE 22 mm red mushroom-head momentary push button** (1NO, SPST)
 
-Two output wires leave the box through the side wall. An internal zip-tie anchor gives them strain relief. A window in the end wall lets you reach the battery holder's own ON/OFF switch from outside.
+Two output wires leave the box through the side wall. An internal zip-tie anchor gives them strain relief. A window in the side wall lets you reach the battery holder's own ON/OFF switch from outside.
 
 ![preview](preview.png)
 
@@ -38,7 +38,8 @@ The battery holder was measured at **126 × 71 × 19 mm** (L × W × H, cover on
 - `btn_body_d`: widest part of the button below the panel (nut across the corners)
 - `btn_depth`: how far the button sticks down below the panel, including the terminals and wire bends
 - `wire_d`: exit hole size (4 mm suits 18–22 AWG hook-up wire)
-- `sw_from_edge`, `sw_from_bottom`: where the holder's ON/OFF switch sits. Lay the holder flat with the switch end facing you, then measure from its left edge to the switch center, and from the table to the switch center. Set `switch_window = false` to leave the window out.
+- `sw_from_end`, `sw_from_bottom`, `lead_from_end`: the holder's ON/OFF switch and lead wires are on the same long side. Lay the holder flat with that side facing you. From the end nearest the switch, measure to the switch center (`sw_from_end`) and to where the wires come out (`lead_from_end`). Measure from the table up to the switch center (`sw_from_bottom`). Set `switch_window = false` to leave the window out.
+- `sw_gap`: room between that side of the holder and the wall, for the switch and the wires to bend (6 mm).
 
 To re-export: `openscad -D 'part="base"' -o base.stl button_box.scad` (repeat with `lid`), or open the file in OpenSCAD, set `part`, press F6, then F7.
 
@@ -46,10 +47,10 @@ In the slicer the parts measure:
 
 | Part | X | Y | Z |
 |---|---|---|---|
-| Base | 175.8 | 89.8 | 31.0 |
-| Lid (as printed) | 173.8 | 85.8 | 28.7 |
+| Base | 175.8 | 90.8 | 31.0 |
+| Lid (as printed) | 173.8 | 86.8 | 28.7 |
 
-Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes (sliding lid, button depth 24): base X = L + 49.8, Y = W + 18.8, Z = max(H, 24) + 7; lid X = L + 47.8, Y = W + 14.8, Z = max(H, 24) + 4.7.
+Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes (sliding lid, button depth 24): base X = L + 49.8, Y = W + 19.8, Z = max(H, 24) + 7; lid X = L + 47.8, Y = W + 15.8, Z = max(H, 24) + 4.7.
 
 **Want the screw-on lid back?** Set `lid_style = "screw"` at the top of `button_box.scad` and re-export both parts. Print the base and the lid as two separate jobs, or put both on one plate.
 
@@ -79,11 +80,11 @@ Battery holder BLACK (−) ───► Output wire 2  (−)
 
 **Leave slack:** the button rides on the lid, so give the wires to the button about **10 cm of slack**. That lets you slide the lid off and set it beside the box while you change batteries.
 
-1. Put the battery holder in the main cavity with its **switch end against the end wall with the switch window**, on the same side as the wire exit holes. Push it in until the switch lines up with the window. Run the holder's red/black leads along the side gap (over the spacer) to the button compartment.
+1. Put the battery holder in the main cavity with its **switch-and-wires side facing the wall with the switch window and the output wire holes**, and the switch end toward the button compartment. Push it against the stops at the compartment end; the switch then lines up with the window. The spacer on that side stops short of where the leads come out, so the switch and the leads have a 6 mm gap. Run the leads along that gap into the button compartment, where all the connections are made.
 2. Push the button through the lid hole from the top. Tighten the nut from underneath.
 3. Wire it as shown above, leaving the slack. Solder or crimp, and cover the joints with heat-shrink.
 4. Feed the two output wires out through the side holes. Zip-tie them to the anchor bridge just inside the holes. (The tie goes through the tunnel under the bridge and over the wires.)
-5. The holder's ON/OFF switch, reached through the end-wall window, is your master power switch. Turn it OFF for storage or transport so the button can't fire if it gets bumped.
+5. The holder's ON/OFF switch, reached through the side-wall window (use a fingertip or a pen), is your master power switch. Turn it OFF for storage or transport so the button can't fire if it gets bumped.
 6. Tuck the slack wire into the button compartment. Slide the lid on from the button end, with the button going in first, until it clicks. The ribs under the lid have sloped ends, so they ride over the holder and then press it down so it doesn't rattle.
 
 To change the batteries, slide the lid off toward the button end, lift out the holder, and slide off its cover.

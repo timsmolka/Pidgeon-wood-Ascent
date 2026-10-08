@@ -35,21 +35,25 @@ wire_d        = 4.0;      // exit hole diameter (fits ~18-22 AWG hook-up wire; 4
 wire_count    = 2;        // number of exit holes
 wire_spacing  = 10;       // center-to-center spacing of exit holes
 
-// Battery holder ON/OFF switch window (in the end wall at X = 0).
-// Lay the holder flat, switch end facing you, and measure:
+// The holder's ON/OFF switch and its lead wires are on the same long side.
+// That side faces the Y = 0 wall (same wall as the output wire holes), with
+// the switch end toward the button compartment. Lay the holder flat with
+// that side facing you and measure from the end nearest the switch:
 switch_window  = true;
-sw_from_edge   = 10;      // left edge of holder -> centre of switch (mm)
-sw_from_bottom = 7;       // table -> centre of switch (mm)
-sw_win_w       = 16;      // window width  (inner, mm)
-sw_win_h       = 10;      // window height (inner, mm)
-sw_flare       = 3;       // outward flare so a fingertip can reach the slider
+sw_from_end    = 10;      // end of holder -> centre of switch (mm)
+sw_from_bottom = 6;       // table -> centre of switch (mm)
+lead_from_end  = 35;      // end of holder -> where the lead wires come out (mm)
+sw_gap         = 6;       // room on that side for the switch and the leads to bend
+sw_win_w       = 16;      // window length at the holder (mm)
+sw_win_h       = 10;      // window height at the holder (mm)
+sw_flare       = 4;       // window widens by this much per side toward the outside
 
 // ---------------- ENCLOSURE SETTINGS ----------------
 wall      = lid_style == "slide" ? 3.6 : 2.4;  // wall thickness (slide needs room for the groove)
 floor_t   = 2.0;          // floor thickness
 lid_t     = 3.0;          // lid thickness (keep <= ~6 so the button nut can grab)
 clr       = 0.8;          // clearance around the battery holder
-wire_gap  = 5;            // side gap so the holder's lead wires aren't pinched
+wire_gap  = 5;            // gap on the side away from the switch
 comp_l    = btn_body_d + 8;  // length of the button compartment
 
 screw_pilot = 2.6;        // M3 self-tapping pilot hole (use 4.0-4.2 for M3 heat-set inserts)
@@ -73,7 +77,8 @@ $fn = 64;
 
 // ---------------- DERIVED ----------------
 IL = clr + holder_l + clr + comp_l;            // interior length (X)
-IW = holder_w + 2*clr + 2*wire_gap;            // interior width  (Y)
+IW = holder_w + 2*clr + sw_gap + wire_gap;     // interior width  (Y)
+hy = sw_gap + clr;                              // holder's Y position
 IH = max(holder_h + 2, btn_depth + 2);         // interior height (Z)
 
 btn_x = IL - comp_l/2 + 1;
@@ -120,14 +125,16 @@ module base() {
         // window for the battery holder's ON/OFF switch
         if (switch_window) switch_cut();
     }
-    // side spacers keep the holder centred. On the Y=0 side the first 22 mm
-    // is left open where the holder's lead wires come out; the leads then run
-    // along that gap (above the spacer) to the button compartment.
-    translate([clr + 22, 0, 0]) cube([holder_l - 22, wire_gap, 12]);
+    // side spacers keep the holder in place. On the switch side the spacer
+    // stops short of where the leads come out, so the switch and the leads
+    // have free room; the leads run along that gap to the button compartment.
+    lead_x = clr + holder_l - lead_from_end;
+    if (lead_x - 6 > clr + 10)
+        translate([clr, 0, 0]) cube([lead_x - 6 - clr, sw_gap, 12]);
     translate([clr, IW - wire_gap, 0]) cube([holder_l, wire_gap, 12]);
     // end stops so the holder can't slide into the button compartment
     stop_x = clr + holder_l + clr;
-    for (y = [wire_gap, IW - wire_gap - 4])
+    for (y = [hy + 2, IW - wire_gap - 6])
         translate([stop_x, y, 0]) cube([2, 4, 10]);
     // zip-tie anchor bridge under the exit holes (tie threads through along X)
     anchor();
@@ -145,15 +152,19 @@ module slide_slot(c) {
     }
 }
 
-// Switch window: holder's switch end sits against the X = 0 wall,
-// holder's left edge (switch end facing you) is on the Y = 0 side.
+// Switch window in the Y = 0 side wall, tapering from the holder's face out
+// through the wall so a fingertip (or pen) can reach the slider.
 module switch_cut() {
-    cy = wire_gap + clr + sw_from_edge;
+    cx = clr + holder_l - sw_from_end;
     cz = sw_from_bottom;
-    hull() {
-        translate([0.5, cy - sw_win_w/2, cz - sw_win_h/2]) cube([0.01, sw_win_w, sw_win_h]);
-        translate([-wall - 0.5, cy - sw_win_w/2 - sw_flare, cz - sw_win_h/2 - sw_flare])
-            cube([0.01, sw_win_w + 2*sw_flare, sw_win_h + 2*sw_flare]);
+    zlo = 0.6;                                   // keep the floor intact
+    intersection() {
+        hull() {
+            translate([cx - sw_win_w/2, hy, cz - sw_win_h/2]) cube([sw_win_w, 0.01, sw_win_h]);
+            translate([cx - sw_win_w/2 - sw_flare, -wall - 0.5, cz - sw_win_h/2 - sw_flare])
+                cube([sw_win_w + 2*sw_flare, 0.01, sw_win_h + 2*sw_flare]);
+        }
+        translate([-50, -50, zlo]) cube([IL + 100, IW + 100, IH]);
     }
 }
 
@@ -240,7 +251,7 @@ module screw_lid() {
 // ---------------- PREVIEW HELPERS ----------------
 module ghost_parts() {
     // battery holder
-    %translate([clr, wire_gap + clr, 0]) cube([holder_l, holder_w, holder_h]);
+    %translate([clr, hy, 0]) cube([holder_l, holder_w, holder_h]);
     // button body + head
     %translate([btn_x, btn_y, IH - btn_depth]) cylinder(d = btn_body_d, h = btn_depth);
     %translate([btn_x, btn_y, IH + lid_t]) scale([1, 1, 0.5]) sphere(d = btn_head_d);
