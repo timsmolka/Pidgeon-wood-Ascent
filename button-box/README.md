@@ -21,7 +21,7 @@ Two output wires leave the box through the side wall. An internal zip-tie anchor
 
 ## Dimensions
 
-The battery holder was measured at **126 × 71 × 19 mm** (L × W × H, cover on). The button depth and the switch position are still estimates. To change any of them, edit these values at the top of `button_box.scad` and re-export:
+The battery holder was measured at **126 × 71 × 19 mm** (L × W × H, cover on). The button reaches about 20 mm below its nut (the model allows 24 mm, for the wire bend). The switch position is still an estimate. To change any of them, edit these values at the top of `button_box.scad` and re-export:
 
 - `holder_l`, `holder_w`, `holder_h`: battery holder size, including its cover
 - `btn_body_d`: widest part of the button below the panel (nut across the corners)
@@ -35,10 +35,10 @@ In the slicer the parts measure:
 
 | Part | X | Y | Z |
 |---|---|---|---|
-| Base | 183.8 | 97.8 | 38.0 |
-| Lid (as printed) | 183.8 | 97.8 | 19.6 |
+| Base | 183.8 | 97.8 | 28.0 |
+| Lid (as printed) | 183.8 | 97.8 | 9.6 |
 
-Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes: X = L + 57.8, Y = W + 26.8, base Z = max(H + 4, 38), lid Z = 3 + max(3, 35.6 − H). Print the base and the lid as two separate jobs, or put both on one plate.
+Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes: X = L + 57.8, Y = W + 26.8, base Z = max(H + 4, 28), lid Z = 3 + max(3, 25.6 − H). Print the base and the lid as two separate jobs, or put both on one plate.
 
 ## Print settings (Creality K1 SE / Creality Print)
 

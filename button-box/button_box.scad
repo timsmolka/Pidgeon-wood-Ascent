@@ -8,7 +8,7 @@
 // Target printer: Creality K1 SE (220 x 220 x 250 bed). Both parts fit flat.
 //
 // Holder dimensions below were measured from the actual part (Oct 2026).
-// Button depth and switch position are still estimates.
+// Button depth measured (~20 mm below the nut). Switch position is still an estimate.
 //
 // Export each part:  set `part` below to "base" or "lid", F6 render, F7 export STL.
 // Or from the command line:
@@ -25,7 +25,7 @@ holder_h = 19;            // battery holder height, including cover (mm)
 btn_hole_d    = 22.4;     // panel hole for the 22 mm button (22 mm + print allowance)
 btn_head_d    = 34;       // mushroom head diameter (only used for preview/clearance check)
 btn_body_d    = 33;       // widest part below the panel (nut across corners / terminals)
-btn_depth     = 34;       // length of button below the panel incl. terminals + wire bend
+btn_depth     = 24;       // measured ~20 mm below the nut + ~4 mm for the wire bend
 
 wire_d        = 4.0;      // exit hole diameter (fits ~18-22 AWG hook-up wire; 4.0 = loose)
 wire_count    = 2;        // number of exit holes
