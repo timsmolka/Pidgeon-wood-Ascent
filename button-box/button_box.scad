@@ -35,15 +35,17 @@ wire_d        = 4.0;      // exit hole diameter (fits ~18-22 AWG hook-up wire; 4
 wire_count    = 2;        // number of exit holes
 wire_spacing  = 10;       // center-to-center spacing of exit holes
 
-// The holder's ON/OFF switch and its lead wires are on the same long side.
-// That side faces the Y = 0 wall (same wall as the output wire holes), with
-// the switch end toward the button compartment. Lay the holder flat with
-// that side facing you and measure from the end nearest the switch:
+// The holder's ON/OFF switch and its lead wires are on the same long side,
+// at opposite ends. That side faces the Y = 0 wall (same wall as the output
+// wire holes): switch at the far end (X = 0), leads at the button-compartment
+// end. Lay the holder flat with that side facing you and measure:
 switch_window  = true;
-sw_from_end    = 10;      // end of holder -> centre of switch (mm)
+sw_from_end    = 10;      // switch end of holder -> centre of switch (mm)
 sw_from_bottom = 6;       // table -> centre of switch (mm)
-lead_from_end  = 35;      // end of holder -> where the lead wires come out (mm)
-sw_gap         = 6;       // room on that side for the switch and the leads to bend
+lead_from_end  = 10;      // OTHER end of holder -> where the leads come out (mm)
+sw_gap         = 2;       // gap on that side (small, so the switch is easy to reach)
+lead_pocket_d  = 2.4;     // inner-wall pocket at the leads (doesn't go through)
+lead_pocket_h  = 16;      // pocket height from the floor
 sw_win_w       = 16;      // window length at the holder (mm)
 sw_win_h       = 10;      // window height at the holder (mm)
 sw_flare       = 4;       // window widens by this much per side toward the outside
@@ -124,13 +126,14 @@ module base() {
                 rotate([90, 0, 0]) cylinder(d = wire_d, h = wall + post_r + 2);
         // window for the battery holder's ON/OFF switch
         if (switch_window) switch_cut();
+        lead_pocket();
     }
     // side spacers keep the holder in place. On the switch side the spacer
-    // stops short of where the leads come out, so the switch and the leads
-    // have free room; the leads run along that gap to the button compartment.
-    lead_x = clr + holder_l - lead_from_end;
-    if (lead_x - 6 > clr + 10)
-        translate([clr, 0, 0]) cube([lead_x - 6 - clr, sw_gap, 12]);
+    // runs between the switch window and the lead pocket.
+    sp0 = clr + sw_from_end + sw_win_w/2 + 2;
+    sp1 = lead_pocket_x0() - 2;
+    if (sp1 - sp0 > 10)
+        translate([sp0, 0, 0]) cube([sp1 - sp0, sw_gap, 12]);
     translate([clr, IW - wire_gap, 0]) cube([holder_l, wire_gap, 12]);
     // end stops so the holder can't slide into the button compartment
     stop_x = clr + holder_l + clr;
@@ -152,10 +155,22 @@ module slide_slot(c) {
     }
 }
 
+// Where the lead pocket starts (it runs from just before the leads into the
+// button compartment, so the leads go straight there).
+function lead_pocket_x0() = clr + holder_l - lead_from_end - 12;
+
+// Pocket cut into the inside of the Y = 0 wall at the holder's lead wires,
+// so they aren't crushed against the wall. It does not go through.
+module lead_pocket() {
+    x1 = clr + holder_l + clr + 6;
+    translate([lead_pocket_x0(), -lead_pocket_d, 0.6])
+        cube([x1 - lead_pocket_x0(), lead_pocket_d + 0.01, lead_pocket_h - 0.6]);
+}
+
 // Switch window in the Y = 0 side wall, tapering from the holder's face out
 // through the wall so a fingertip (or pen) can reach the slider.
 module switch_cut() {
-    cx = clr + holder_l - sw_from_end;
+    cx = clr + sw_from_end;
     cz = sw_from_bottom;
     zlo = 0.6;                                   // keep the floor intact
     intersection() {
@@ -164,7 +179,7 @@ module switch_cut() {
             translate([cx - sw_win_w/2 - sw_flare, -wall - 0.5, cz - sw_win_h/2 - sw_flare])
                 cube([sw_win_w + 2*sw_flare, 0.01, sw_win_h + 2*sw_flare]);
         }
-        translate([-50, -50, zlo]) cube([IL + 100, IW + 100, IH]);
+        translate([0, -50, zlo]) cube([IL, IW + 100, IH]);   // keep end wall + floor
     }
 }
 

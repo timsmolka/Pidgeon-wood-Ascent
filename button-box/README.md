@@ -38,8 +38,9 @@ The battery holder was measured at **126 × 71 × 19 mm** (L × W × H, cover on
 - `btn_body_d`: widest part of the button below the panel (nut across the corners)
 - `btn_depth`: how far the button sticks down below the panel, including the terminals and wire bends
 - `wire_d`: exit hole size (4 mm suits 18–22 AWG hook-up wire)
-- `sw_from_end`, `sw_from_bottom`, `lead_from_end`: the holder's ON/OFF switch and lead wires are on the same long side. Lay the holder flat with that side facing you. From the end nearest the switch, measure to the switch center (`sw_from_end`) and to where the wires come out (`lead_from_end`). Measure from the table up to the switch center (`sw_from_bottom`). Set `switch_window = false` to leave the window out.
-- `sw_gap`: room between that side of the holder and the wall, for the switch and the wires to bend (6 mm).
+- `sw_from_end`, `sw_from_bottom`, `lead_from_end`: the holder's ON/OFF switch and lead wires are on the same long side, at opposite ends. Lay the holder flat with that side facing you. Measure from the switch end to the switch center (`sw_from_end`), from the table up to the switch center (`sw_from_bottom`), and from the *other* end to where the wires come out (`lead_from_end`). Set `switch_window = false` to leave the window out.
+- `sw_gap`: gap between that side of the holder and the wall (2 mm, so the switch is easy to reach).
+- `lead_pocket_d`, `lead_pocket_h`: the pocket cut into the inside of the wall at the holder's wires (2.4 mm deep, 16 mm tall). It doesn't go through to the outside.
 
 To re-export: `openscad -D 'part="base"' -o base.stl button_box.scad` (repeat with `lid`), or open the file in OpenSCAD, set `part`, press F6, then F7.
 
@@ -47,10 +48,10 @@ In the slicer the parts measure:
 
 | Part | X | Y | Z |
 |---|---|---|---|
-| Base | 175.8 | 90.8 | 31.0 |
-| Lid (as printed) | 173.8 | 86.8 | 28.7 |
+| Base | 175.8 | 86.8 | 31.0 |
+| Lid (as printed) | 173.8 | 82.8 | 28.7 |
 
-Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes (sliding lid, button depth 24): base X = L + 49.8, Y = W + 19.8, Z = max(H, 24) + 7; lid X = L + 47.8, Y = W + 15.8, Z = max(H, 24) + 4.7.
+Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes (sliding lid, button depth 24): base X = L + 49.8, Y = W + 15.8, Z = max(H, 24) + 7; lid X = L + 47.8, Y = W + 11.8, Z = max(H, 24) + 4.7.
 
 **Want the screw-on lid back?** Set `lid_style = "screw"` at the top of `button_box.scad` and re-export both parts. Print the base and the lid as two separate jobs, or put both on one plate.
 
@@ -80,7 +81,7 @@ Battery holder BLACK (−) ───► Output wire 2  (−)
 
 **Leave slack:** the button rides on the lid, so give the wires to the button about **10 cm of slack**. That lets you slide the lid off and set it beside the box while you change batteries.
 
-1. Put the battery holder in the main cavity with its **switch-and-wires side facing the wall with the switch window and the output wire holes**, and the switch end toward the button compartment. Push it against the stops at the compartment end; the switch then lines up with the window. The spacer on that side stops short of where the leads come out, so the switch and the leads have a 6 mm gap. Run the leads along that gap into the button compartment, where all the connections are made.
+1. Put the battery holder in the main cavity with its **switch-and-wires side facing the wall with the switch window and the output wire holes**. The switch goes at the far end (by the window), the wires at the button-compartment end. Push it against the stops at the compartment end; the switch then lines up with the window. Where the wires come out, a pocket cut into the inside of the wall gives them room, so they aren't crushed against the wall. The pocket runs straight into the button compartment, where all the connections are made.
 2. Push the button through the lid hole from the top. Tighten the nut from underneath.
 3. Wire it as shown above, leaving the slack. Solder or crimp, and cover the joints with heat-shrink.
 4. Feed the two output wires out through the side holes. Zip-tie them to the anchor bridge just inside the holes. (The tie goes through the tunnel under the bridge and over the wires.)
