@@ -40,13 +40,14 @@ wire_spacing  = 10;       // center-to-center spacing of exit holes
 // wire holes): switch at the far end (X = 0), leads at the button-compartment
 // end. Lay the holder flat with that side facing you and measure:
 switch_window  = true;
-sw_from_end    = 10;      // switch end of holder -> centre of switch (mm)
+sw_from_end    = 12;      // switch end of holder -> centre of window (mm); was 10, moved 2 mm inward
 sw_from_bottom = 6;       // table -> centre of switch (mm)
 lead_from_end  = 10;      // OTHER end of holder -> where the leads come out (mm)
 sw_gap         = 2;       // gap on that side (small, so the switch is easy to reach)
 lead_pocket_d  = 2.4;     // inner-wall pocket at the leads (doesn't go through)
 lead_pocket_h  = 16;      // pocket height from the floor
 sw_win_w       = 16;      // window length at the holder (mm)
+sw_win_extra   = 0;       // extra length added only on the side toward the box centre (mm)
 sw_win_h       = 10;      // window height at the holder (mm)
 sw_flare       = 4;       // window widens by this much per side toward the outside
 
@@ -130,7 +131,7 @@ module base() {
     }
     // side spacers keep the holder in place. On the switch side the spacer
     // runs between the switch window and the lead pocket.
-    sp0 = clr + sw_from_end + sw_win_w/2 + 2;
+    sp0 = clr + sw_from_end + sw_win_w/2 + sw_win_extra + 2;
     sp1 = lead_pocket_x0() - 2;
     if (sp1 - sp0 > 10)
         translate([sp0, 0, 0]) cube([sp1 - sp0, sw_gap, 12]);
@@ -175,9 +176,10 @@ module switch_cut() {
     zlo = 0.6;                                   // keep the floor intact
     intersection() {
         hull() {
-            translate([cx - sw_win_w/2, hy, cz - sw_win_h/2]) cube([sw_win_w, 0.01, sw_win_h]);
+            translate([cx - sw_win_w/2, hy, cz - sw_win_h/2])
+                cube([sw_win_w + sw_win_extra, 0.01, sw_win_h]);
             translate([cx - sw_win_w/2 - sw_flare, -wall - 0.5, cz - sw_win_h/2 - sw_flare])
-                cube([sw_win_w + 2*sw_flare, 0.01, sw_win_h + 2*sw_flare]);
+                cube([sw_win_w + sw_win_extra + 2*sw_flare, 0.01, sw_win_h + 2*sw_flare]);
         }
         translate([0, -50, zlo]) cube([IL, IW + 100, IH]);   // keep end wall + floor
     }
