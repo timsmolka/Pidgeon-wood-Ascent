@@ -41,7 +41,8 @@ wire_spacing  = 10;       // center-to-center spacing of exit holes
 // end. Lay the holder flat with that side facing you and measure:
 switch_window  = true;
 // Measured on the real holder (Oct 2026), lying cover-side up with the
-// switch side facing you. The slider moves up and down.
+// switch side facing you. The slider moves left/right: left = ON, right = OFF
+// (left is the holder's switch end, which sits at the box's X = 0 end).
 sw_x0          = 8;       // switch end of holder -> start of the switch (mm)
 sw_x1          = holder_l - 110;  // ends 110 mm from the other end (= 16 mm)
 sw_z0          = 6.5;     // table -> bottom of the switch (mm)
@@ -49,7 +50,7 @@ sw_z1          = holder_h - 6.5;  // 6.5 mm below the holder's top (= 12.5 mm)
 sw_knob        = 3;       // slider knob, width and height (mm)
 sw_knob_out    = 2;       // how far the knob sticks out of the holder (mm)
 // extra opening around the switch so the printed ON / OFF labels show
-sw_buffer_h    = 4;       // left and right of the switch (mm)
+sw_buffer_h    = 6;       // left and right of the switch, where ON / OFF are printed (mm)
 sw_buffer_v    = 3;       // above and below the switch (mm)
 lead_from_end  = 10;      // OTHER end of holder -> where the leads come out (mm)
 sw_gap         = 2;       // gap on that side (small, so the switch is easy to reach)
