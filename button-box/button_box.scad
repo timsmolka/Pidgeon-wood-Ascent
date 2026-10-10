@@ -40,15 +40,28 @@ wire_spacing  = 10;       // center-to-center spacing of exit holes
 // wire holes): switch at the far end (X = 0), leads at the button-compartment
 // end. Lay the holder flat with that side facing you and measure:
 switch_window  = true;
-sw_from_end    = 13;      // switch end of holder -> centre of window (mm)
-sw_from_bottom = 7.5;     // table -> centre of window (mm)
+// measured on the real holder (Oct 2026)
+sw_center      = 3.25;    // switch end of holder -> middle of the switch slot (mm)
+sw_height      = 4.5;     // table -> middle of the slider (mm)
+sw_travel      = 6.5;     // slot length, end to end (mm)
+sw_knob        = 3;       // slider knob, width and height (mm)
+sw_knob_out    = 2;       // how far the knob sticks out of the holder (mm)
+// extra opening around the switch so the printed ON / OFF labels show
+sw_buffer_in   = 7;       // toward the box centre (mm)
+sw_buffer_end  = 4;       // toward the holder's end (the end wall cuts this short)
+sw_buffer_v    = 3;       // above and below the knob (mm)
 lead_from_end  = 10;      // OTHER end of holder -> where the leads come out (mm)
 sw_gap         = 2;       // gap on that side (small, so the switch is easy to reach)
 lead_pocket_d  = 2.4;     // inner-wall pocket at the leads (doesn't go through)
 lead_pocket_h  = 16;      // pocket height from the floor
-sw_win_w       = 16;      // window length at the holder (mm)
+// window derived from the measurements above
+sw_win_x0      = sw_center - sw_travel/2 - sw_buffer_end;
+sw_win_x1      = sw_center + sw_travel/2 + sw_buffer_in;
+sw_from_end    = (sw_win_x0 + sw_win_x1) / 2;   // window centre from the holder's end
+sw_win_w       = sw_win_x1 - sw_win_x0;          // window length at the holder (mm)
 sw_win_extra   = 0;       // extra length added only on the side toward the box centre (mm)
-sw_win_h       = 10;      // window height at the holder (mm)
+sw_from_bottom = sw_height;
+sw_win_h       = sw_knob + 2*sw_buffer_v;        // window height at the holder (mm)
 sw_flare       = 4;       // window widens by this much per side toward the outside
 
 // ---------------- ENCLOSURE SETTINGS ----------------
