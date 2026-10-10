@@ -40,8 +40,8 @@ wire_spacing  = 10;       // center-to-center spacing of exit holes
 // wire holes): switch at the far end (X = 0), leads at the button-compartment
 // end. Lay the holder flat with that side facing you and measure:
 switch_window  = true;
-sw_from_end    = 12;      // switch end of holder -> centre of window (mm); was 10, moved 2 mm inward
-sw_from_bottom = 6;       // table -> centre of switch (mm)
+sw_from_end    = 13;      // switch end of holder -> centre of window (mm)
+sw_from_bottom = 7.5;     // table -> centre of window (mm)
 lead_from_end  = 10;      // OTHER end of holder -> where the leads come out (mm)
 sw_gap         = 2;       // gap on that side (small, so the switch is easy to reach)
 lead_pocket_d  = 2.4;     // inner-wall pocket at the leads (doesn't go through)

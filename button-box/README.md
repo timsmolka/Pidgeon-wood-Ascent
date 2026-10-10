@@ -41,8 +41,8 @@ A flat plate sits directly on top of the battery holder and keeps it from moving
 | File | What |
 |---|---|
 | `button_box.scad` | Parametric OpenSCAD source. Edit the dimensions at the top. |
-| `base.stl` | Ready-to-slice base. Switch window moved 2 mm toward the box center. |
-| `base-wide-switch.stl` | Alternate base: switch window in its original spot but 3 mm longer, on the side toward the center. Print one base or the other; both use the same lid. |
+| `base.stl` | Ready-to-slice base. Switch window centered 13 mm from the holder's switch end and 7.5 mm up (16 × 10 mm). |
+| `base-wide-switch.stl` | Alternate base: switch window 1 mm closer to the end, 7.5 mm up, and 3 mm longer on the side toward the center. Print one base or the other; both use the same lid. |
 | `lid.stl` | Ready-to-slice lid, already flipped top-face-down for printing (end wall pointing up). |
 | `plate.stl` | Hold-down plate that sits on top of the battery holder. Print flat, ribs up. |
 
@@ -55,7 +55,7 @@ The battery holder was measured at **126 × 71 × 19 mm** (L × W × H, cover on
 - `btn_depth`: how far the button sticks down below the panel, including the terminals and wire bends
 - `wire_d`: exit hole size (4 mm suits 18–22 AWG hook-up wire)
 - `sw_from_end`, `sw_from_bottom`, `lead_from_end`: the holder's ON/OFF switch and lead wires are on the same long side, at opposite ends. Lay the holder flat with that side facing you. Measure from the switch end to the switch center (`sw_from_end`), from the table up to the switch center (`sw_from_bottom`), and from the *other* end to where the wires come out (`lead_from_end`). Set `switch_window = false` to leave the window out.
-- `sw_win_extra`: lengthens the switch window on the side toward the box center only (0 for `base.stl`, 3 for `base-wide-switch.stl` together with `sw_from_end = 10`).
+- `sw_win_extra`: lengthens the switch window on the side toward the box center only (0 for `base.stl`, 3 for `base-wide-switch.stl` together with `sw_from_end = 11`).
 - `sw_gap`: gap between that side of the holder and the wall (2 mm, so the switch is easy to reach).
 - `lead_pocket_d`, `lead_pocket_h`: the pocket cut into the inside of the wall at the holder's wires (2.4 mm deep, 16 mm tall). It doesn't go through to the outside.
 
