@@ -80,7 +80,9 @@ detent    = 0.25;         // how hard the closing "click" bumps press (0 = none)
 hold_plate  = true;
 plate_t     = 2.0;        // plate thickness
 plate_cover = 0.70;       // fraction of the holder's top the plate covers
-tab_press   = 0.15;       // how hard each side tab presses into the wall (friction)
+tab_press   = 0.15;       // how hard each tab presses while sliding in its track (friction)
+tab_track_d = 0.6;        // depth of the tracks in the side walls the tabs slide along
+tab_pocket_d = 1.0;       // depth of the pockets the tabs click into at the end
 lid_gap     = 0.2;        // gap between the plate's ribs and the main lid
 
 // screw lid
@@ -123,6 +125,9 @@ pl_l = holder_l * sqrt(plate_cover) * 1.01;
 pl_w = holder_w * sqrt(plate_cover) * 0.99;
 pl_x0 = clr + 6;                                // 6 mm in from the far end
 pl_y0 = hy + holder_w - pl_w - 2;               // toward the side away from the leads
+tab_w = 8;
+tab_xs = [pl_x0 + pl_l*0.2, pl_x0 + pl_l*0.8 - tab_w];
+tab_out = tab_track_d + tab_press;              // how far each tab reaches into the wall
 
 // ---------------- BASE ----------------
 module base() {
@@ -148,6 +153,7 @@ module base() {
         // window for the battery holder's ON/OFF switch
         if (switch_window) switch_cut();
         lead_pocket();
+        if (hp) tab_tracks();
     }
     // side spacers keep the holder in place. On the switch side the spacer
     // runs between the switch window and the lead pocket.
@@ -176,10 +182,30 @@ module slide_slot(c) {
     }
 }
 
+// Tracks and click pockets in both side walls for the plate's tabs. The
+// tracks run from the front tabs' final spot out through the open end, with a
+// 45-degree top so they print without supports. The pockets are deeper with
+// 45-degree ends, so the tabs click in and can be pulled back out.
+module tab_tracks() {
+    z0 = gz0 - 0.2;
+    h = plate_t + 0.4;
+    for (side = [0, 1])
+        translate([0, side ? IW : 0, 0]) mirror([0, side, 0]) {
+            hull() {
+                translate([tab_xs[0] - 1, -tab_track_d, z0]) cube([IL + wall + 2 - tab_xs[0], tab_track_d + 0.01, h]);
+                translate([tab_xs[0] - 1, 0, z0]) cube([IL + wall + 2 - tab_xs[0], 0.01, h + tab_track_d]);
+            }
+            for (x = tab_xs)
+                hull() {
+                    translate([x + 2, -tab_pocket_d, z0]) cube([tab_w - 4, tab_pocket_d + 0.01, h]);
+                    translate([x + 2 - tab_pocket_d, 0, z0]) cube([tab_w - 4 + 2*tab_pocket_d, 0.01, h + tab_pocket_d]);
+                }
+        }
+}
+
 // The hold-down plate, in assembled position.
 module hold_down_plate() {
     rib_h = IH - lid_gap - (gz0 + plate_t);
-    tab_w = 8;
     difference() {
         union() {
             // plate, leading (far) edge chamfered underneath so it rides up
@@ -188,16 +214,17 @@ module hold_down_plate() {
                 translate([pl_x0 + 1.5, pl_y0, gz0]) cube([pl_l - 1.5, pl_w, plate_t]);
                 translate([pl_x0, pl_y0, gz0 + 1]) cube([pl_l, pl_w, plate_t - 1]);
             }
-            // friction tabs out to both side walls; tapered at the leading
-            // end so they ease in between the walls
-            for (x = [pl_x0 + pl_l*0.2, pl_x0 + pl_l*0.8 - tab_w]) {
+            // tabs out to both side walls: they ride in the wall tracks and
+            // click into the pockets. Pointed at both ends so they slide in
+            // and back out of the pockets.
+            for (x = tab_xs) {
                 hull() {
-                    translate([x + 3, -tab_press, gz0]) cube([tab_w - 3, pl_y0 + tab_press + 1, plate_t]);
-                    translate([x, 0.8, gz0]) cube([tab_w, pl_y0, plate_t]);
+                    translate([x + 2.5, -tab_out, gz0]) cube([tab_w - 5, pl_y0 + tab_out + 1, plate_t]);
+                    translate([x, 0.3, gz0]) cube([tab_w, pl_y0, plate_t]);
                 }
                 hull() {
-                    translate([x + 3, pl_y0 + pl_w - 1, gz0]) cube([tab_w - 3, IW + tab_press - (pl_y0 + pl_w - 1), plate_t]);
-                    translate([x, pl_y0 + pl_w - 1, gz0]) cube([tab_w, IW - 0.8 - (pl_y0 + pl_w - 1), plate_t]);
+                    translate([x + 2.5, pl_y0 + pl_w - 1, gz0]) cube([tab_w - 5, IW + tab_out - (pl_y0 + pl_w - 1), plate_t]);
+                    translate([x, pl_y0 + pl_w - 1, gz0]) cube([tab_w, IW - 0.3 - (pl_y0 + pl_w - 1), plate_t]);
                 }
             }
             // ribs up to just under the main lid (run lengthwise so the lid

@@ -28,8 +28,8 @@ A flat plate sits directly on top of the battery holder and keeps it from moving
 
 - It covers about **70%** of the holder's top. The switch-and-wires side and the button end are left uncovered, so the wires get out freely.
 - **What holds it:** two ribs on top of the plate reach to within 0.2 mm of the main lid. With the lid on, the plate (and the holder under it) can't lift. Friction alone tends to loosen as printed plastic wears, so the lid does the real holding.
-- **Friction:** four small tabs press 0.15 mm into the side walls (`tab_press`), so the plate stays put while the main lid is off.
-- **Putting it in:** slide it in flat from the open (button) end, riding on top of the holder, until it stops about 6 mm short of the far wall. It can't be dropped in from above, because the main lid's grooves make the top opening too narrow. Its front edge and the tabs are tapered so it eases in.
+- **Tabs, tracks and pockets:** four tabs on the plate's sides ride in shallow tracks (0.6 mm deep) cut into both side walls, pressing in 0.15 mm for light friction (`tab_press`). When the plate is fully in, each tab drops into a deeper pocket (1 mm) in the wall and clicks into place. The tracks also keep the plate from lifting while the main lid is off. The tabs are pointed at both ends, and the pockets have sloped ends, so the plate pulls back out with a firm tug.
+- **Putting it in:** slide it in flat from the open (button) end, riding on top of the holder, until the tabs click into their pockets, about 6 mm short of the far wall. It can't be dropped in from above, because the main lid's grooves make the top opening too narrow. Its front edge and the tabs are tapered so it eases in, and the tabs follow the tracks in the walls.
 - **Taking it out:** hook a finger in one of the two holes and slide it back out the button end.
 
 ![hold-down plate in place](hold-down-plate.png)
@@ -111,6 +111,6 @@ To change the batteries, slide the lid off toward the button end, slide the hold
 
 - The button is rated 3–5 A. Eight AA cells give a nominal 12 V.
 - If the lid slides too tight, raise `slide_clr` (0.4 → 0.5). If it's loose, lower it. If the click is too hard or too soft, change `detent` (0 turns it off). A little sanding works too.
-- If the hold-down plate is too tight between the walls, lower `tab_press` (0.15 → 0), or sand the tab ends. If it's loose with the lid off, raise it to 0.3.
+- If the hold-down plate is too tight to slide in, lower `tab_press` (0.15 → 0), or sand the tab tips. If it doesn't click firmly, raise `tab_press` to 0.3 (or lower `tab_pocket_d` toward 0.8).
 - If the holder still moves with the lid on, lower `lid_gap` (0.2 → 0). The ribs then press the plate down when the lid is closed.
 - To go back to ribs under the lid instead of the plate, set `hold_plate = false`.
