@@ -24,15 +24,15 @@ The lid slides on and off from the **button end**, like a pencil box:
 
 ## Hold-down plate
 
-A flat plate slides into grooves in both side walls, just above the battery holder, and presses it down so it can't rattle.
+A flat plate sits directly on top of the battery holder and keeps it from moving.
 
-- It goes in and out through the open (button) end while the main lid is off.
-- Its front edge is beveled underneath, so it rides up onto the holder instead of catching on it.
-- It presses 0.2 mm into the holder (`plate_press`), so the holder stays snug.
-- A pull lip and a finger hole at the open end make it easy to pull back out.
-- When the main lid is on, a small stop under the lid sits just behind the pull lip, so the plate can't slide out. If the plate isn't pushed all the way in, closing the lid pushes it home.
+- It covers about **70%** of the holder's top. The switch-and-wires side and the button end are left uncovered, so the wires get out freely.
+- **What holds it:** two ribs on top of the plate reach to within 0.2 mm of the main lid. With the lid on, the plate (and the holder under it) can't lift. Friction alone tends to loosen as printed plastic wears, so the lid does the real holding.
+- **Friction:** four small tabs press 0.15 mm into the side walls (`tab_press`), so the plate stays put while the main lid is off.
+- **Putting it in:** slide it in flat from the open (button) end, riding on top of the holder, until it stops about 6 mm short of the far wall. It can't be dropped in from above, because the main lid's grooves make the top opening too narrow. Its front edge and the tabs are tapered so it eases in.
+- **Taking it out:** hook a finger in one of the two holes and slide it back out the button end.
 
-![hold-down plate sliding in](hold-down-plate.png)
+![hold-down plate in place](hold-down-plate.png)
 
 ## Files
 
@@ -42,7 +42,7 @@ A flat plate slides into grooves in both side walls, just above the battery hold
 | `base.stl` | Ready-to-slice base. Switch window moved 2 mm toward the box center. |
 | `base-wide-switch.stl` | Alternate base: switch window in its original spot but 3 mm longer, on the side toward the center. Print one base or the other; both use the same lid. |
 | `lid.stl` | Ready-to-slice lid, already flipped top-face-down for printing (end wall pointing up). |
-| `plate.stl` | Hold-down plate that keeps the battery holder from moving. Print flat, pull lip up. |
+| `plate.stl` | Hold-down plate that sits on top of the battery holder. Print flat, ribs up. |
 
 ## Dimensions
 
@@ -65,7 +65,7 @@ In the slicer the parts measure:
 |---|---|---|---|
 | Base | 175.8 | 86.8 | 31.0 |
 | Lid (as printed) | 173.8 | 82.8 | 28.7 |
-| Hold-down plate | 126.3 | 82.0 | 5.0 |
+| Hold-down plate | 106.5 | 79.9 | 6.8 |
 
 Both fit the K1 SE's 220 × 220 mm bed. For other holder sizes (sliding lid, button depth 24): base X = L + 49.8, Y = W + 15.8, Z = max(H, 24) + 7; lid X = L + 47.8, Y = W + 11.8, Z = max(H, 24) + 4.7.
 
@@ -102,14 +102,15 @@ Battery holder BLACK (−) ───► Output wire 2  (−)
 3. Wire it as shown above, leaving the slack. Solder or crimp, and cover the joints with heat-shrink.
 4. Feed the two output wires out through the side holes. Zip-tie them to the anchor bridge just inside the holes. (The tie goes through the tunnel under the bridge and over the wires.)
 5. The holder's ON/OFF switch, reached through the side-wall window (use a fingertip or a pen), is your master power switch. Turn it OFF for storage or transport so the button can't fire if it gets bumped.
-6. Slide the hold-down plate into its grooves from the button end, over the battery holder, until it stops at the far end wall.
+6. Slide the hold-down plate in flat from the button end, on top of the battery holder, ribs up.
 7. Tuck the slack wire into the button compartment. Slide the lid on from the button end, with the button going in first, until it clicks.
 
-To change the batteries, slide the lid off toward the button end, pull the hold-down plate out by its lip, lift out the holder, and slide off its cover.
+To change the batteries, slide the lid off toward the button end, slide the hold-down plate out by its finger holes, lift out the holder, and slide off its cover.
 
 ## Notes
 
 - The button is rated 3–5 A. Eight AA cells give a nominal 12 V.
 - If the lid slides too tight, raise `slide_clr` (0.4 → 0.5). If it's loose, lower it. If the click is too hard or too soft, change `detent` (0 turns it off). A little sanding works too.
-- If the hold-down plate is too hard to slide in, lower `plate_press` (0.2 → 0) or raise `groove_clr`. If the holder still moves, raise `plate_press` to 0.4.
+- If the hold-down plate is too tight between the walls, lower `tab_press` (0.15 → 0), or sand the tab ends. If it's loose with the lid off, raise it to 0.3.
+- If the holder still moves with the lid on, lower `lid_gap` (0.2 → 0). The ribs then press the plate down when the lid is closed.
 - To go back to ribs under the lid instead of the plate, set `hold_plate = false`.

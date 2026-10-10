@@ -71,15 +71,17 @@ dt        = 2.0;          // how far the 45-degree lid groove cuts into each wal
 slide_clr = 0.4;          // play between lid and groove (raise if too tight)
 detent    = 0.25;         // how hard the closing "click" bumps press (0 = none)
 
-// Hold-down plate: a separate flat plate that slides into grooves in the side
-// walls just above the battery holder and presses it down. Slides in from the
-// open (button) end with the main lid off.
+// Hold-down plate: a separate plate that sits directly on top of the battery
+// holder, covering about 70% of it. The edges along the ends and the
+// switch/leads side stay open for the wires. It slides in flat from the open
+// (button) end, riding on the holder's top. Four tabs press lightly against
+// the side walls so it stays put with the main lid off; ribs on top reach
+// almost to the main lid, so with the lid on the plate can't lift.
 hold_plate  = true;
 plate_t     = 2.0;        // plate thickness
-plate_press = 0.2;        // how far the plate presses into the holder top (0 = just touching)
-groove_d    = 1.6;        // how deep the plate grooves cut into each side wall
-groove_clr  = 0.4;        // play between plate and groove
-handle_h    = 3;          // pull lip at the plate's open end
+plate_cover = 0.70;       // fraction of the holder's top the plate covers
+tab_press   = 0.15;       // how hard each side tab presses into the wall (friction)
+lid_gap     = 0.2;        // gap between the plate's ribs and the main lid
 
 // screw lid
 lip_h     = 3;            // alignment lip under the lid
@@ -115,8 +117,12 @@ module outline() {
 }
 
 hp = slide && hold_plate;
-gz0 = holder_h - plate_press;                   // underside of the hold-down plate
-plate_x1 = clr + holder_l;                      // plate's open-end edge (over the holder's end)
+gz0 = holder_h;                                 // plate sits on the holder's top
+// plate size: 70% of the holder top, split evenly between length and width
+pl_l = holder_l * sqrt(plate_cover) * 1.01;
+pl_w = holder_w * sqrt(plate_cover) * 0.99;
+pl_x0 = clr + 6;                                // 6 mm in from the far end
+pl_y0 = hy + holder_w - pl_w - 2;               // toward the side away from the leads
 
 // ---------------- BASE ----------------
 module base() {
@@ -142,7 +148,6 @@ module base() {
         // window for the battery holder's ON/OFF switch
         if (switch_window) switch_cut();
         lead_pocket();
-        if (hp) plate_grooves();
     }
     // side spacers keep the holder in place. On the switch side the spacer
     // runs between the switch window and the lead pocket.
@@ -171,38 +176,39 @@ module slide_slot(c) {
     }
 }
 
-// Grooves for the hold-down plate: square bottom, 45-degree top so they
-// print without supports. They run out through the open end.
-module plate_grooves() {
-    gh = plate_t + groove_clr;
-    for (side = [0, 1])
-        translate([0, side ? IW : 0, 0]) mirror([0, side, 0])
-        hull() {
-            translate([0, -groove_d, gz0]) cube([IL + wall + 1, groove_d + 0.01, gh]);
-            translate([0, 0, gz0]) cube([IL + wall + 1, 0.01, gh + groove_d]);
-        }
-}
-
 // The hold-down plate, in assembled position.
 module hold_down_plate() {
-    pw = IW + 2*(groove_d - groove_clr);
-    y0 = -(groove_d - groove_clr);
-    x0 = 0.5;
+    rib_h = IH - lid_gap - (gz0 + plate_t);
+    tab_w = 8;
     difference() {
         union() {
-            // plate, with its leading (far) edge chamfered underneath so it
-            // rides up onto the holder instead of catching
+            // plate, leading (far) edge chamfered underneath so it rides up
+            // onto the holder instead of catching on it
             hull() {
-                translate([x0 + 2, y0, gz0]) cube([plate_x1 - x0 - 2, pw, plate_t]);
-                translate([x0, y0, gz0 + 1]) cube([plate_x1 - x0, pw, plate_t - 1]);
+                translate([pl_x0 + 1.5, pl_y0, gz0]) cube([pl_l - 1.5, pl_w, plate_t]);
+                translate([pl_x0, pl_y0, gz0 + 1]) cube([pl_l, pl_w, plate_t - 1]);
             }
-            // pull lip at the open end
-            translate([plate_x1 - 2, IW/2 - 15, gz0]) cube([2, 30, plate_t + handle_h]);
+            // friction tabs out to both side walls; tapered at the leading
+            // end so they ease in between the walls
+            for (x = [pl_x0 + pl_l*0.2, pl_x0 + pl_l*0.8 - tab_w]) {
+                hull() {
+                    translate([x + 3, -tab_press, gz0]) cube([tab_w - 3, pl_y0 + tab_press + 1, plate_t]);
+                    translate([x, 0.8, gz0]) cube([tab_w, pl_y0, plate_t]);
+                }
+                hull() {
+                    translate([x + 3, pl_y0 + pl_w - 1, gz0]) cube([tab_w - 3, IW + tab_press - (pl_y0 + pl_w - 1), plate_t]);
+                    translate([x, pl_y0 + pl_w - 1, gz0]) cube([tab_w, IW - 0.8 - (pl_y0 + pl_w - 1), plate_t]);
+                }
+            }
+            // ribs up to just under the main lid (run lengthwise so the lid
+            // slides over them)
+            if (rib_h > 0.5)
+                for (y = [pl_y0 + pl_w/2 - 16, pl_y0 + pl_w/2 + 14])
+                    translate([pl_x0 + 4, y, gz0]) cube([pl_l - 8, 2, plate_t + rib_h]);
         }
-        // finger hole to pull it out, and two windows to save plastic
-        translate([plate_x1 - 14, IW/2, gz0 - 1]) cylinder(d = 16, h = plate_t + 2);
-        for (x = [12, 12 + (plate_x1 - 40)/2])
-            translate([x, IW/2 - 18, gz0 - 1]) cube([(plate_x1 - 40)/2 - 8, 36, plate_t + 2]);
+        // finger holes for lifting it out
+        for (x = [pl_x0 + pl_l*0.32, pl_x0 + pl_l*0.68])
+            translate([x, pl_y0 + pl_w/2, gz0 - 1]) cylinder(d = 18, h = plate_t + 2);
     }
 }
 
@@ -276,11 +282,6 @@ module slide_lid() {
                     translate([IL + wall/2, y, -IH/2]) sphere(r = 1.2);
             if (rib_h > 0.5)
                 for (y = [IW/2 - 15, IW/2 + 13]) rib(y, rib_h);
-            // stop just past the plate's pull lip: with the lid on, the plate
-            // can't slide out
-            if (hp)
-                translate([plate_x1 + 0.5, IW/2 - 10, -(IH - (gz0 + plate_t + handle_h - 1))])
-                    cube([2, 20, IH - (gz0 + plate_t + handle_h - 1)]);
         }
         // button hole
         translate([btn_x, btn_y, -1]) cylinder(d = btn_hole_d, h = lid_t + 2);
@@ -336,7 +337,7 @@ if (part == "base") {
     // printed upside down: smooth top face on the bed
     translate([0, 0, lid_t]) rotate([180, 0, 0]) lid();
 } else if (part == "plate") {
-    // printed flat, pull lip up
+    // printed flat, ribs up
     translate([0, 0, -gz0]) hold_down_plate();
 } else if (part == "assembled") {
     base();
