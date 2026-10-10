@@ -93,13 +93,13 @@ detent    = 0.25;         // how hard the closing "click" bumps press (0 = none)
 // the side walls so it stays put with the main lid off; ribs on top reach
 // almost to the main lid, so with the lid on the plate can't lift.
 hold_plate  = true;
-plate_t     = 2.0;        // plate thickness
+plate_t     = 2.5;        // plate thickness
 plate_cover = 0.70;       // fraction of the holder's top the plate covers
 tab_track_d = 0.6;        // depth of the tracks in the side walls the snap bumps slide along
 snap_d      = 0.4;        // how far each snap bump springs in while sliding (bigger = harder click)
 snap_clr    = 0.1;        // play left once the bumps have snapped into their pockets
-spring_len  = 30;         // length of the flexible strip each bump sits on
-spring_t    = 1.2;        // thickness of that strip (thicker = stiffer)
+spring_len  = 36;         // length of the flexible strip each bump sits on
+spring_t    = 1.6;        // thickness of that strip (thicker = stronger and stiffer)
 lid_gap     = 0.2;        // gap between the plate's ribs and the main lid
 
 // screw lid

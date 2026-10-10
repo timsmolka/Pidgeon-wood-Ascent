@@ -24,11 +24,11 @@ The lid slides on and off from the **button end**, like a pencil box:
 
 ## Hold-down plate
 
-A flat plate sits directly on top of the battery holder and keeps it from moving.
+A flat plate (2.5 mm thick, with two stiffening ribs on top) sits directly on top of the battery holder and keeps it from moving. Print it in PETG if you can: it bends instead of cracking.
 
 - It covers about **70%** of the holder's top. The switch-and-wires side and the button end are left uncovered, so the wires get out freely.
 - **What holds it:** two ribs on top of the plate reach to within 0.2 mm of the main lid. With the lid on, the plate (and the holder under it) can't lift. Friction alone tends to loosen as printed plastic wears, so the lid does the real holding.
-- **Snap tabs:** four snap tabs, two per side, hold the plate in place. Each is a small pointed bump on a thin flexible strip (30 mm long, 1.2 mm thick) that runs alongside the wall and is attached to the plate at both ends. The bumps ride in shallow tracks (0.6 mm deep) in both side walls, with the strips bent in 0.4 mm. When the plate is fully in, each bump springs out into a deeper pocket (1.1 mm) with a **snap**. The tracks also keep the plate from lifting while the main lid is off. The bumps and pockets have 45° sloped ends, so a firm pull snaps the plate back out.
+- **Snap tabs:** four snap tabs, two per side, hold the plate in place. Each is a small pointed bump on a flexible strip (36 mm long, 1.6 mm thick) that runs alongside the wall and is attached to the plate at both ends. The bumps ride in shallow tracks (0.6 mm deep) in both side walls, with the strips bent in 0.4 mm. When the plate is fully in, each bump springs out into a deeper pocket (1.1 mm) with a **snap**. The tracks also keep the plate from lifting while the main lid is off. The bumps and pockets have 45° sloped ends, so a firm pull snaps the plate back out.
 
 ![snap tab close-up](snap-tab.png)
 - **Putting it in:** slide it in flat from the open (button) end, riding on top of the holder, until the tabs snap into their pockets, about 6 mm short of the far wall. It can't be dropped in from above, because the main lid's grooves make the top opening too narrow. Its front edge and the tabs are tapered so it eases in, and the tabs follow the tracks in the walls.
@@ -112,6 +112,6 @@ To change the batteries, slide the lid off toward the button end, slide the hold
 
 - The button is rated 3–5 A. Eight AA cells give a nominal 12 V.
 - If the lid slides too tight, raise `slide_clr` (0.4 → 0.5). If it's loose, lower it. If the click is too hard or too soft, change `detent` (0 turns it off). A little sanding works too.
-- If the snap is too hard, lower `snap_d` (0.4 → 0.3) or make the strips thinner (`spring_t` 1.2 → 1.0). If it's too soft, raise `snap_d` to 0.5. PETG handles repeated snapping better than PLA.
+- If the snap is too hard, lower `snap_d` (0.4 → 0.3) or make the strips thinner (`spring_t` 1.6 → 1.4). If it's too soft, raise `snap_d` to 0.5. PETG handles repeated snapping better than PLA.
 - If the holder still moves with the lid on, lower `lid_gap` (0.2 → 0). The ribs then press the plate down when the lid is closed.
 - To go back to ribs under the lid instead of the plate, set `hold_plate = false`.
