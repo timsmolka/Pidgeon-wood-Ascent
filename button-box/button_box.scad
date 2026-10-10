@@ -80,9 +80,11 @@ detent    = 0.25;         // how hard the closing "click" bumps press (0 = none)
 hold_plate  = true;
 plate_t     = 2.0;        // plate thickness
 plate_cover = 0.70;       // fraction of the holder's top the plate covers
-tab_press   = 0.15;       // how hard each tab presses while sliding in its track (friction)
-tab_track_d = 0.6;        // depth of the tracks in the side walls the tabs slide along
-tab_pocket_d = 1.0;       // depth of the pockets the tabs click into at the end
+tab_track_d = 0.6;        // depth of the tracks in the side walls the snap bumps slide along
+snap_d      = 0.4;        // how far each snap bump springs in while sliding (bigger = harder click)
+snap_clr    = 0.1;        // play left once the bumps have snapped into their pockets
+spring_len  = 30;         // length of the flexible strip each bump sits on
+spring_t    = 1.2;        // thickness of that strip (thicker = stiffer)
 lid_gap     = 0.2;        // gap between the plate's ribs and the main lid
 
 // screw lid
@@ -125,9 +127,11 @@ pl_l = holder_l * sqrt(plate_cover) * 1.01;
 pl_w = holder_w * sqrt(plate_cover) * 0.99;
 pl_x0 = clr + 6;                                // 6 mm in from the far end
 pl_y0 = hy + holder_w - pl_w - 2;               // toward the side away from the leads
-tab_w = 8;
-tab_xs = [pl_x0 + pl_l*0.2, pl_x0 + pl_l*0.8 - tab_w];
-tab_out = tab_track_d + tab_press;              // how far each tab reaches into the wall
+tab_xs = [pl_x0 + pl_l*0.25, pl_x0 + pl_l*0.75]; // snap bump centres
+tab_out = tab_track_d + snap_d;                 // how far each bump reaches into the wall
+tab_pocket_d = tab_out + snap_clr;              // pocket depth
+bump_tip = 3;                                   // flat length of each bump's tip
+beam_gap = 0.6;                                 // gap between spring strip and wall
 
 // ---------------- BASE ----------------
 module base() {
@@ -191,16 +195,38 @@ module tab_tracks() {
     h = plate_t + 0.4;
     for (side = [0, 1])
         translate([0, side ? IW : 0, 0]) mirror([0, side, 0]) {
+            t0 = tab_xs[0] - bump_tip/2 - tab_out - 1;
             hull() {
-                translate([tab_xs[0] - 1, -tab_track_d, z0]) cube([IL + wall + 2 - tab_xs[0], tab_track_d + 0.01, h]);
-                translate([tab_xs[0] - 1, 0, z0]) cube([IL + wall + 2 - tab_xs[0], 0.01, h + tab_track_d]);
+                translate([t0, -tab_track_d, z0]) cube([IL + wall + 2 - t0, tab_track_d + 0.01, h]);
+                translate([t0, 0, z0]) cube([IL + wall + 2 - t0, 0.01, h + tab_track_d]);
             }
-            for (x = tab_xs)
+            pf = bump_tip + 1;                  // pocket floor length
+            for (c = tab_xs)
                 hull() {
-                    translate([x + 2, -tab_pocket_d, z0]) cube([tab_w - 4, tab_pocket_d + 0.01, h]);
-                    translate([x + 2 - tab_pocket_d, 0, z0]) cube([tab_w - 4 + 2*tab_pocket_d, 0.01, h + tab_pocket_d]);
+                    translate([c - pf/2, -tab_pocket_d, z0]) cube([pf, tab_pocket_d + 0.01, h]);
+                    translate([c - pf/2 - tab_pocket_d, 0, z0]) cube([pf + 2*tab_pocket_d, 0.01, h + tab_pocket_d]);
                 }
         }
+}
+
+// One snap tab, for the wall at Y = 0 (mirrored for the other wall).
+// A thin strip runs parallel to the wall, held at both ends by posts from the
+// plate; a bump in its middle sticks out into the wall. Sliding along the
+// track the strip bends in by snap_d, then springs out into the pocket.
+// e = distance from the wall to the plate edge (plus overlap).
+module snap_tab(c, e) {
+    x0 = c - spring_len/2;
+    // strip
+    translate([x0, beam_gap, gz0]) cube([spring_len, spring_t, plate_t]);
+    // posts at both ends
+    for (x = [x0, x0 + spring_len - 3])
+        translate([x, beam_gap, gz0]) cube([3, e - beam_gap, plate_t]);
+    // bump with 45-degree ramps
+    hull() {
+        translate([c - bump_tip/2, -tab_out, gz0]) cube([bump_tip, tab_out + beam_gap + 0.01, plate_t]);
+        translate([c - bump_tip/2 - tab_out - beam_gap, beam_gap, gz0])
+            cube([bump_tip + 2*(tab_out + beam_gap), 0.01, plate_t]);
+    }
 }
 
 // The hold-down plate, in assembled position.
@@ -214,18 +240,10 @@ module hold_down_plate() {
                 translate([pl_x0 + 1.5, pl_y0, gz0]) cube([pl_l - 1.5, pl_w, plate_t]);
                 translate([pl_x0, pl_y0, gz0 + 1]) cube([pl_l, pl_w, plate_t - 1]);
             }
-            // tabs out to both side walls: they ride in the wall tracks and
-            // click into the pockets. Pointed at both ends so they slide in
-            // and back out of the pockets.
-            for (x = tab_xs) {
-                hull() {
-                    translate([x + 2.5, -tab_out, gz0]) cube([tab_w - 5, pl_y0 + tab_out + 1, plate_t]);
-                    translate([x, 0.3, gz0]) cube([tab_w, pl_y0, plate_t]);
-                }
-                hull() {
-                    translate([x + 2.5, pl_y0 + pl_w - 1, gz0]) cube([tab_w - 5, IW + tab_out - (pl_y0 + pl_w - 1), plate_t]);
-                    translate([x, pl_y0 + pl_w - 1, gz0]) cube([tab_w, IW - 0.3 - (pl_y0 + pl_w - 1), plate_t]);
-                }
+            // snap tabs on both sides
+            for (c = tab_xs) {
+                snap_tab(c, pl_y0 + 1);
+                translate([0, IW, 0]) mirror([0, 1, 0]) snap_tab(c, IW - (pl_y0 + pl_w) + 1);
             }
             // ribs up to just under the main lid (run lengthwise so the lid
             // slides over them)
